@@ -1,0 +1,5 @@
+export const analysis={D:0,I:0,S:0,C:0,logs:[],walkDistance:0,runDistance:0,idleSeconds:0,actions:0};
+const labels={D:"主導性 / Dominance",I:"影響性 / Influence",S:"安定性 / Steadiness",C:"慎重性 / Conscientiousness"};
+export function record(type,detail,weight={}){analysis.logs.unshift({time:new Date().toLocaleTimeString("ja-JP",{hour12:false}),type,detail});analysis.logs=analysis.logs.slice(0,80);analysis.actions++;for(const k of Object.keys(weight))analysis[k]+=weight[k];window.dispatchEvent(new CustomEvent("observation",{detail:{type,detail}}));}
+export function recordMovement(distance,running){if(distance<0.0001){analysis.idleSeconds+=1/60;return}analysis.walkDistance+=distance;if(running)analysis.runDistance+=distance;}
+export function getSummary(){const total=analysis.D+analysis.I+analysis.S+analysis.C;const entries=Object.keys(labels).map(k=>({key:k,label:labels[k],score:analysis[k],pct:total?Math.round(analysis[k]/total*100):0})).sort((a,b)=>b.score-a.score);return {entries,leader:entries[0],total};}
