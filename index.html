@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090817">
+<title>深夜都市行動解析計画 | MIDNIGHT PROTOCOL</title>
+<meta name="description" content="深夜都市行動解析計画 — DISCに基づく行動観測型ナイトシティ探索。行動ハスベテ、都市ノ管理システムニ記録サレテイル。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080817;--panel:rgba(16,17,43,.82);--line:rgba(126,143,255,.25);--cyan:#72f6ff;--pink:#ff75c8;--violet:#a998ff;--text:#e8eaff;--muted:#9ba1c6;--mono:'DotGothic16',monospace;--sans:'Zen Kaku Gothic New',sans-serif}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans)}button,input{font:inherit}button{cursor:pointer;color:inherit}
+#scene{position:fixed;inset:0;z-index:0}#scene canvas{display:block}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,transparent 20%,rgba(5,5,18,.35) 68%,rgba(5,5,18,.92) 120%);box-shadow:inset 0 0 140px #03030d}
+.scanlines{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.12;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(135,166,255,.15) 4px)}
+#app{position:relative;z-index:3;height:100%;pointer-events:none}.ui{pointer-events:auto}
+.topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:22px 28px;border-bottom:1px solid rgba(119,136,255,.15);background:linear-gradient(180deg,rgba(6,7,22,.82),transparent)}
+.brand{font:12px var(--mono);letter-spacing:.18em;color:var(--cyan)}.status{font:10px var(--mono);color:#8bffcb;letter-spacing:.1em}.status:before{content:'●';margin-right:8px;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}.hero{position:absolute;left:clamp(24px,7vw,110px);top:50%;transform:translateY(-50%);max-width:660px;width:calc(100% - 48px)}
+.kicker{font:11px var(--mono);letter-spacing:.28em;color:var(--pink);margin-bottom:22px}.title{font-size:clamp(34px,5.6vw,72px);line-height:1.23;font-weight:900;letter-spacing:.04em;margin:0;text-shadow:0 0 34px rgba(127,112,255,.25)}.title-en{font:clamp(10px,1.3vw,14px) var(--mono);letter-spacing:.25em;color:var(--cyan);margin-top:14px}
+.intro{font-size:14px;line-height:2;color:#b7badb;max-width:490px;margin:30px 0 26px}.intro .glitch{font-family:var(--mono);font-size:12px;color:#ff9ad8;letter-spacing:.06em}
+.actions{display:flex;gap:12px;flex-wrap:wrap}.primary,.secondary{padding:14px 21px;border:1px solid var(--cyan);background:rgba(68,220,255,.1);letter-spacing:.08em;font-size:12px;transition:.2s}.primary{color:#f0feff;box-shadow:0 0 24px rgba(80,220,255,.13)}.primary:hover{background:rgba(68,220,255,.24);box-shadow:0 0 32px rgba(80,220,255,.24);transform:translateY(-2px)}.secondary{border-color:var(--line);background:rgba(20,20,49,.45);color:#b9c0e7}.secondary:hover{border-color:var(--pink);color:#fff}
+.disc-label{margin-top:30px;display:flex;gap:7px;flex-wrap:wrap}.disc{font:10px var(--mono);padding:6px 9px;border:1px solid var(--line);background:rgba(11,13,35,.6);letter-spacing:.06em}.disc b{margin-right:5px}.d b{color:#ff6b85}.i b{color:#ffc96b}.s b{color:#79ffc8}.c b{color:#82dfff}
+.corner{position:absolute;right:28px;bottom:26px;text-align:right;font:10px/2 var(--mono);color:#858cb7;letter-spacing:.08em}.corner strong{color:#c6caff;font-weight:400}.sidehint{position:absolute;left:28px;bottom:27px;font:10px/2 var(--mono);color:#8187b0}
+.panel{position:absolute;inset:0;display:none;pointer-events:none}.panel.active{display:block}.hud{position:absolute;top:88px;left:24px;width:min(310px,calc(100% - 48px));padding:18px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(12px);pointer-events:auto}.eyebrow{font:10px var(--mono);letter-spacing:.2em;color:var(--cyan)}.hud h2{font-size:20px;margin:8px 0}.hud p{font-size:12px;line-height:1.8;color:#b2b7d6}.log{font:11px/1.8 var(--mono);color:#9ba5d6;border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.log span{color:var(--pink)}.interact{position:absolute;right:24px;bottom:26px;width:min(350px,calc(100% - 48px));padding:18px;background:rgba(10,11,30,.88);border:1px solid var(--line);backdrop-filter:blur(14px);pointer-events:auto}.interact h3{font-size:16px;margin:6px 0 10px}.interact p{font-size:12px;line-height:1.8;color:#c1c4df}.choices{display:grid;gap:8px;margin-top:12px}.choice{padding:10px 12px;text-align:left;background:rgba(94,104,190,.1);border:1px solid rgba(126,143,255,.23);font-size:12px}.choice:hover{border-color:var(--cyan);background:rgba(90,210,255,.1)}.smallrow{display:flex;justify-content:space-between;align-items:center;gap:8px}.close{border:1px solid var(--line);background:transparent;padding:5px 9px;color:var(--muted);font-size:11px}
+.result{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:20px;pointer-events:auto;background:rgba(5,5,18,.55);backdrop-filter:blur(7px)}.result.active{display:flex}.result-card{width:min(680px,100%);max-height:90%;overflow:auto;padding:clamp(20px,4vw,38px);background:linear-gradient(145deg,rgba(20,23,57,.97),rgba(8,9,27,.97));border:1px solid rgba(127,151,255,.4);box-shadow:0 0 80px rgba(80,78,255,.15)}.result-card h2{font-size:clamp(26px,5vw,44px);margin:8px 0}.bars{display:grid;gap:12px;margin:24px 0}.barline{display:grid;grid-template-columns:30px 1fr 38px;align-items:center;gap:10px;font:12px var(--mono)}.track{height:7px;background:#252644}.fill{height:100%;width:0;transition:width 1s ease}.barline:nth-child(1) .fill{background:#ff6b85}.barline:nth-child(2) .fill{background:#ffc96b}.barline:nth-child(3) .fill{background:#79ffc8}.barline:nth-child(4) .fill{background:#82dfff}
+.loadvrm{position:absolute;right:24px;top:90px;width:min(300px,calc(100% - 48px));padding:15px;background:var(--panel);border:1px solid var(--line);pointer-events:auto}.loadvrm label{display:block;font-size:11px;color:#bbc3e5;margin-bottom:8px}.loadvrm input{width:100%;font-size:11px;color:#9fa9d1}.toast{position:absolute;top:75px;left:50%;transform:translateX(-50%);font:11px var(--mono);color:var(--cyan);background:rgba(6,10,26,.9);border:1px solid var(--line);padding:10px 16px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:normal;width:max-content;max-width:90vw;text-align:center}.toast.show{opacity:1}
+.controls{position:absolute;bottom:25px;left:50%;transform:translateX(-50%);font:10px var(--mono);color:#9ba1c6;letter-spacing:.08em;white-space:nowrap}
+@media(max-width:650px){.topbar{padding:16px}.brand{font-size:10px}.hero{top:48%;left:22px;width:calc(100% - 44px)}.title{font-size:clamp(32px,9vw,50px)}.intro{font-size:12px;margin:20px 0}.corner{display:none}.sidehint{left:16px;bottom:10px}.hud{top:76px;left:12px;width:calc(100% - 24px);padding:12px}.hud h2{font-size:17px}.hud p{margin:6px 0}.interact{bottom:12px;right:12px;width:calc(100% - 24px);padding:13px}.loadvrm{top:auto;bottom:170px;right:12px;width:calc(100% - 24px);padding:10px}.controls{display:none}}
+</style>
+</head>
+<body>
+<div id="scene"></div><div class="vignette"></div><div class="scanlines"></div>
+<div id="app">
+<header class="topbar ui"><div class="brand">M.P.A. // CITY OBSERVATION DIVISION</div><div class="status">SYSTEM ONLINE</div></header>
+<section class="hero ui" id="landing">
+<div class="kicker">深夜都市行動解析計画 // FILE 00</div>
+<h1 class="title">深夜都市<br>行動解析計画</h1><div class="title-en">MIDNIGHT PROTOCOL — DISC BEHAVIORAL OBSERVATION</div>
+<p class="intro">眠ラナイ都市ニ、アナタノ行動ログヲ記録スル。<br>選択、探索、対話。正解ハ存在シナイ。<br><span class="glitch">行動ハスベテ、都市ノ管理システムニ記録サレテイル。</span></p>
+<div class="actions"><button class="primary" id="startBtn">▶ 観測ヲ開始スル</button><button class="secondary" id="howBtn">SYSTEM / 操作説明</button></div>
+<div class="disc-label"><span class="disc d"><b>D</b> DOMINANCE</span><span class="disc i"><b>I</b> INFLUENCE</span><span class="disc s"><b>S</b> STEADINESS</span><span class="disc c"><b>C</b> CONSCIENTIOUSNESS</span></div>
+</section>
+<div class="sidehint ui">[ CLICK TO INTERACT ]<br>NOCTURNE CITY / SECTOR 01</div><div class="corner ui">BEHAVIOR LOG : <strong id="logCount">000</strong><br>LOCAL TIME : 02:17 AM<br>OBSERVATION STATUS : ACTIVE</div>
+<section class="panel" id="gamePanel">
+<div class="hud ui"><div class="eyebrow">CITY NETWORK // LIVE</div><h2 id="districtTitle">SECTOR 01 : CROSSROADS</h2><p id="districtText">都市の中心区画。すべての行動は観測対象です。</p><div class="log" id="systemLog"><span>SYS&gt;</span> 観測対象ヲ確認。行動ログ収集中...</div></div>
+<div class="loadvrm ui"><label for="vrmFile">AVATAR LINK // VRoidモデル（.vrm）</label><input id="vrmFile" type="file" accept=".vrm,.glb,.gltf"><p style="font-size:10px;line-height:1.7;color:#7f89b4;margin:8px 0 0">自分のVRoidモデルを読み込めます。モデルデータはこのブラウザ内で表示します。</p></div>
+<div class="interact ui" id="interactBox"><div class="smallrow"><span class="eyebrow" id="npcLabel">UNKNOWN SIGNAL</span><button class="close" id="closeInteract">閉じる ×</button></div><h3 id="interactTitle">都市ノ声ヲ検出</h3><p id="interactText">光る地点をクリックして、都市の住人や異常現象を調査してください。</p><div class="choices" id="choices"></div></div>
+<div class="controls ui">CLICK : INSPECT / DRAG : ROTATE CITY / SCROLL : ZOOM</div>
+</section>
+<section class="result ui" id="resultPanel"><div class="result-card"><div class="eyebrow">OBSERVATION COMPLETE // FILE CLOSED</div><h2>アナタノ行動ログ</h2><p style="color:#b5b9d9;line-height:1.9;font-size:13px">都市での選択から、DISCの4指標を観測しました。これは固定的な人格判定ではなく、この探索内で表れた行動傾向のスナップショットです。</p><div class="bars" id="bars"></div><h3 id="resultTitle"></h3><p id="resultText" style="color:#c0c5e4;line-height:1.9;font-size:13px"></p><div class="actions"><button class="primary" id="againBtn">再観測スル</button><button class="secondary" id="backBtn">都市ノ外ヘ戻ル</button></div></div></section>
+<div class="toast" id="toast"></div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/","@pixiv/three-vrm":"https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.2.0/lib/three-vrm.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+const host=document.querySelector('#scene');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x070817);scene.fog=new THREE.FogExp2(0x08091d,.012);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,500);camera.position.set(0,14,32);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0x8fa8ff,0x151027,2));
+const moon=new THREE.DirectionalLight(0x9caeff,2.2);moon.position.set(-12,25,10);scene.add(moon);
+const pinkLight=new THREE.PointLight(0xff4fae,35,55);pinkLight.position.set(0,8,0);scene.add(pinkLight);
+const cyanLight=new THREE.PointLight(0x35dfff,28,45);cyanLight.position.set(-14,4,-8);scene.add(cyanLight);
+const city=new THREE.Group();scene.add(city);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(160,160),new THREE.MeshStandardMaterial({color:0x0c1026,metalness:.65,roughness:.55}));ground.rotation.x=-Math.PI/2;ground.position.y=-.16;city.add(ground);
+const grid=new THREE.GridHelper(160,80,0x283c78,0x171c42);grid.position.y=-.12;city.add(grid);
+const buildings=[];const rand=(a,b)=>a+Math.random()*(b-a);
+for(let i=0;i<220;i++){let x=rand(-65,65),z=rand(-65,65);if(Math.abs(x)<7&&Math.abs(z)<10)continue;let w=rand(1.2,4.2),h=rand(3,rand(8,24)),d=rand(1.2,4.2);let mat=new THREE.MeshStandardMaterial({color:[0x111a39,0x171632,0x121f3c,0x211735][Math.floor(Math.random()*4)],metalness:.55,roughness:.38,emissive:0x070d25,emissiveIntensity:.7});let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,h/2-.1,z);city.add(m);buildings.push(m);
+if(Math.random()>.18){let cols=[0x3deaff,0xff5dc8,0x9380ff,0x6dffc6];for(let j=0;j<Math.floor(h/1.8);j++){if(Math.random()>.38)continue;let win=new THREE.Mesh(new THREE.PlaneGeometry(w*.48,.12),new THREE.MeshBasicMaterial({color:cols[Math.floor(Math.random()*cols.length)],transparent:true,opacity:rand(.2,.8)}));win.position.set(x+rand(-w*.15,w*.15),j*1.6+.7,z+d/2+.008);city.add(win);}}
+}
+function neonLine(x,z,len,color){let m=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,len),new THREE.MeshBasicMaterial({color}));m.position.set(x,.02,z);city.add(m)}
+for(let i=-3;i<=3;i++){neonLine(i*3,0,55,i%2?0x3cecff:0xff57c8);neonLine(0,i*4,38,0x4e5dff)}
+// Holographic billboards
+function billboard(text,x,y,z,color=0x78f5ff){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='rgba(5,8,24,.78)';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#'+color.toString(16).padStart(6,'0');ctx.lineWidth=4;ctx.strokeRect(3,3,506,122);ctx.fillStyle='#'+color.toString(16).padStart(6,'0');ctx.font='bold 38px monospace';ctx.textAlign='center';ctx.fillText(text,256,78);const tex=new THREE.CanvasTexture(c);const m=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide}));m.position.set(x,y,z);city.add(m);return m}
+billboard('D / DOMINION',-10,8,-8,0xff6b85);billboard('I / ILLUSION',10,7,-12,0xffc96b);billboard('S / SANCTUARY',-13,6,10,0x79ffc8);billboard('C / CRYPTIC',13,9,7,0x82dfff);billboard('OBSERVED CITY',0,14,-20,0xff75c8);
+// portals and interactive nodes
+const nodes=[];const nodeDefs=[
+{id:'darling',name:'ダーリンちゃん',sub:'UNKNOWN NAVIGATOR / 🥺',pos:[-4,1.3,1],color:0xff75c8,desc:'観測者のような少女。完璧な案内役の笑顔の奥で、あなたの選択理由を測っている。',kind:'npc'},
+{id:'worm',name:'LSI芋虫',sub:'LOG ANALYST / 🐛',pos:[4,.65,2],color:0x83ffb1,desc:'都市の行動ログを解析する、知識豊富な芋虫。感情さえも構造として説明しようとする。',kind:'npc'},
+{id:'avatar',name:'感情風景観測者',sub:'VRM AVATAR LINK',pos:[0,1,5],color:0x9e91ff,desc:'菓子パンを片手に、退廃都市の風景を眺めている。ありのままの自分を見つけてほしいらしい。',kind:'avatar'},
+{id:'terminal',name:'行動記録端末',sub:'BEHAVIOR LOG TERMINAL',pos:[0,1.3,-5],color:0x72f6ff,desc:'都市の管理システム。選択を記録し、DISCの行動傾向を観測する。',kind:'terminal'},
+{id:'arcade',name:'深夜遊技場',sub:'REACTION TEST / MINI GAME',pos:[-9,.9,-4],color:0xffc96b,desc:'瞬間的な判断、観察、協調。ミニゲームを通じて反応の傾向を記録する。',kind:'game'},
+{id:'memory',name:'記憶ノ残骸',sub:'ANOMALY / MEMORY FRAGMENT',pos:[9,1,-4],color:0x8e8aff,desc:'都市の片隅に残された記憶データ。回収するか、観察するか、誰かに渡すか。',kind:'anomaly'}
+];
+const hitMeshes=[];
+function makeNode(def){const g=new THREE.Group();g.position.set(...def.pos);city.add(g);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(.8,.035,8,48),new THREE.MeshBasicMaterial({color:def.color}));ring.rotation.x=Math.PI/2;ring.position.y=-.45;g.add(ring);
+const orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.4,1),new THREE.MeshStandardMaterial({color:def.color,emissive:def.color,emissiveIntensity:1.4,metalness:.2,roughness:.22,wireframe:def.id==='terminal'}));orb.position.y=.1;g.add(orb);
+const halo=new THREE.Mesh(new THREE.SphereGeometry(.64,16,16),new THREE.MeshBasicMaterial({color:def.color,transparent:true,opacity:.1}));halo.position.y=.1;g.add(halo);
+const c=document.createElement('canvas');c.width=512;c.height=100;const ctx=c.getContext('2d');ctx.fillStyle='#e9f5ff';ctx.font='bold 30px monospace';ctx.textAlign='center';ctx.fillText(def.name,256,42);ctx.fillStyle='#'+def.color.toString(16).padStart(6,'0');ctx.font='18px monospace';ctx.fillText(def.sub,256,76);const tex=new THREE.CanvasTexture(c);const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));label.scale.set(4.2,.82,1);label.position.y=1.5;g.add(label);
+if(def.id==='darling')makeEmojiFace(g);if(def.id==='worm')makeWorm(g);
+g.userData.def=def;nodes.push(g);hitMeshes.push(orb,halo,ring);return g}
+function makeEmojiFace(g){ // 3D-ish 🥺 face: glossy orb, huge eyes, tear highlights
+const face=new THREE.Mesh(new THREE.SphereGeometry(.5,32,24),new THREE.MeshPhysicalMaterial({color:0xffd5dc,roughness:.22,metalness:.02,clearcoat:1,clearcoatRoughness:.1}));face.position.y=.15;g.add(face);
+for(const x of [-.19,.19]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.095,20,16),new THREE.MeshBasicMaterial({color:0x37203e}));eye.position.set(x,.23,.42);g.add(eye);const shine=new THREE.Mesh(new THREE.SphereGeometry(.03,12,10),new THREE.MeshBasicMaterial({color:0xffffff}));shine.position.set(x-.02,.27,.49);g.add(shine)}
+const tear=new THREE.Mesh(new THREE.SphereGeometry(.045,12,12),new THREE.MeshPhysicalMaterial({color:0x88e9ff,transparent:true,opacity:.85,roughness:.05,metalness:.1}));tear.position.set(.3,.06,.45);g.add(tear);
+const mouth=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,8,16,Math.PI),new THREE.MeshBasicMaterial({color:0x7c3e59}));mouth.position.set(0,-.04,.49);mouth.rotation.z=Math.PI;g.add(mouth)}
+function makeWorm(g){const green=new THREE.MeshPhysicalMaterial({color:0x92f29e,roughness:.28,clearcoat:.6});for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.24-i*.018,20,16),green);s.position.set((i-2)*.3,.02+Math.sin(i*.8)*.12,0);g.add(s)}const head=new THREE.Mesh(new THREE.SphereGeometry(.26,24,20),green);head.position.set(.68,.09,0);g.add(head);for(const x of [.61,.76]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,10,8),new THREE.MeshBasicMaterial({color:0x183124}));eye.position.set(x,.16,.22);g.add(eye)}for(const x of [.58,.78]){const a=new THREE.Mesh(new THREE.CylinderGeometry(.012,.025,.22,8),green);a.position.set(x,.34,0);a.rotation.z=x<.7?-.3:.3;g.add(a)}}
+nodeDefs.forEach(makeNode);
+// Floating dust
+const dustGeo=new THREE.BufferGeometry(),dustN=900,dustPos=new Float32Array(dustN*3);for(let i=0;i<dustN;i++){dustPos[i*3]=rand(-75,75);dustPos[i*3+1]=rand(0,35);dustPos[i*3+2]=rand(-75,75)}dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0x9daaff,size:.09,transparent:true,opacity:.75}));scene.add(dust);
+let avatar=null, avatarUrl=null;
+const loader=new GLTFLoader();loader.register(p=>new VRMLoaderPlugin(p));
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let drag=false,down={x:0,y:0},targetRot=0,targetY=0,zoom=32;
+const initialCam=new THREE.Vector3(0,14,32);let active=false,logs=0;const scores={D:0,I:0,S:0,C:0};
+const $=s=>document.querySelector(s);
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
+function log(msg){logs++;$('#logCount').textContent=String(logs).padStart(3,'0');$('#systemLog').innerHTML='<span>SYS&gt;</span> '+msg}
+function showInteract(label,title,body,options){$('#npcLabel').textContent=label;$('#interactTitle').textContent=title;$('#interactText').textContent=body;const c=$('#choices');c.innerHTML='';options.forEach(o=>{const b=document.createElement('button');b.className='choice';b.textContent=o.label;b.onclick=()=>{Object.entries(o.score||{}).forEach(([k,v])=>scores[k]+=v);log(o.log||'選択ヲ記録シマシタ。');toast(o.toast||'BEHAVIOR LOG SAVED');if(o.next) o.next();else showInteract('SYSTEM NOTICE','記録完了','その選択は都市の行動ログに追加されました。', [{label:'別の地点を調査する',score:{},log:'観測ヲ継続。',next:()=>$('#interactBox').style.display='none'}]);};c.appendChild(b)})}
+function inspect(def){$('#interactBox').style.display='block';if(def.id==='darling'){showInteract('🥺 DARLING / NAVIGATOR','「ダーリン、どこを見る？」','「ふふ、アナタの選択……ちゃんと見てるよ♡」',[
+{label:'「まず目的地を決めて、最短で向かう」',{D:2,C:1},score:{D:2,C:1},log:'目的優先型ルート選択ヲ検出。',toast:'D +2 / C +1'},
+{label:'「ダーリンちゃんの話をもっと聞きたい」',score:{I:2,S:1},log:'対人交流ノ選択ヲ検出。',toast:'I +2 / S +1'},
+{label:'「急がず、街の様子を一緒に見よう」',score:{S:2,I:1},log:'安定・共同探索ノ選択ヲ検出。',toast:'S +2 / I +1'},
+{label:'「その発言の意図と根拠を確認したい」',score:{C:2,D:1},log:'情報検証型ノ選択ヲ検出。',toast:'C +2 / D +1'}])}
+else if(def.id==='worm'){showInteract('🐛 LSI CATERPILLAR / ANALYST','「行動ログ、解析します」','「人が選択する時、状況認識と優先順位が作用します。……まず、何を確認しますか？」',[
+{label:'「全体構造とルールを整理して」',score:{C:2,D:1},log:'構造分析要求ヲ記録。',toast:'C +2 / D +1'},
+{label:'「みんなの意見も聞いてから決めよう」',score:{I:1,S:2},log:'合意形成型ノ選択ヲ記録。',toast:'I +1 / S +2'},
+{label:'「仮説を立てて、すぐ試してみよう」',score:{D:2,I:1},log:'試行・即応型ノ選択ヲ記録。',toast:'D +2 / I +1'},
+{label:'「急がなくていい。確実に進めよう」',score:{S:2,C:1},log:'慎重・安定型ノ選択ヲ記録。',toast:'S +2 / C +1'}])}
+else if(def.id==='avatar'){showInteract('IEI / 4w5 OBSERVER','「……菓子パン、食べる？」','穏やかな観測者は、ネオンのにじむ街を眺めている。人と違うことを恐れながらも、本当の自分を見つけてほしいと思っている。',[
+{label:'「感じたことを、言葉や作品にしてみる」',score:{I:2,C:1},log:'自己表現型ノ選択ヲ記録。',toast:'I +2 / C +1'},
+{label:'「誰かに、この景色をわかってほしい」',score:{I:2,S:1},log:'共感共有型ノ選択ヲ記録。',toast:'I +2 / S +1'},
+{label:'「自分だけの意味を、静かに考える」',score:{C:2,S:1},log:'内省・解釈型ノ選択ヲ記録。',toast:'C +2 / S +1'},
+{label:'「怖くても、自分らしい方を選ぶ」',score:{D:2,I:1},log:'自己決定型ノ選択ヲ記録。',toast:'D +2 / I +1'}])}
+else if(def.id==='terminal'){showInteract('M.P.A. SYSTEM','行動記録端末','都市ノ管理システムハ、選択ヲ記録シ、行動傾向ヲ集計スル。観測ヲ終了しますか？',[
+{label:'観測結果ヲ出力スル',score:{},log:'観測終了。レポート生成中...',next:finish},
+{label:'まだ探索ヲ続ケル',score:{C:1},log:'観測継続ヲ選択。',toast:'SESSION CONTINUES',next:()=>{$('#interactBox').style.display='none'}}
+])}
+else if(def.id==='arcade'){showInteract('MINI GAME / REACTION','信号ノ選択','3つの信号から、今の自分に近い行動を選択してください。',[
+{label:'赤信号：迷わず押す。結果はあとで考える',score:{D:2},log:'即断即決反応ヲ記録。',toast:'D +2'},
+{label:'黄信号：パターンを読んでから押す',score:{C:2},log:'観察・分析反応ヲ記録。',toast:'C +2'},
+{label:'緑信号：周囲の流れに合わせて進む',score:{S:2,I:1},log:'協調・安定反応ヲ記録。',toast:'S +2 / I +1'}])}
+else{showInteract('ANOMALY / MEMORY FRAGMENT','記憶データを発見','断片化した記憶が浮かんでいる。あなたならどうする？',[
+{label:'回収して、自分で中身を確かめる',score:{D:1,C:2},log:'データ回収ヲ記録。',toast:'C +2 / D +1'},
+{label:'近くの住人に見せて、一緒に考える',score:{I:2,S:1},log:'共同調査ヲ記録。',toast:'I +2 / S +1'},
+{label:'触れずに、周囲への影響を観察する',score:{S:2,C:1},log:'慎重観察ヲ記録。',toast:'S +2 / C +1'}])}
+}
+function finish(){const sum=Object.values(scores).reduce((a,b)=>a+b,0)||1;const vals=Object.fromEntries(Object.entries(scores).map(([k,v])=>[k,Math.round(v/sum*100)]));const names={D:'DOMINANCE / 決断・推進',I:'INFLUENCE / 交流・表現',S:'STEADINESS / 安定・協調',C:'CONSCIENTIOUSNESS / 分析・精密'};$('#bars').innerHTML=Object.entries(vals).map(([k,v])=>'<div class="barline"><span>'+k+'</span><div class="track"><div class="fill" style="width:'+v+'%"></div></div><span>'+v+'%</span></div>').join('');const top=Object.entries(vals).sort((a,b)=>b[1]-a[1])[0][0];const desc={D:'目的を定め、状況を動かすことを選びやすい傾向。停滞よりも前進、曖昧さよりも決断を優先する場面が見られました。',I:'人や刺激との接点をつくり、反応や表現を通して状況を動かす傾向。交流そのものが新しい手がかりになるタイプです。',S:'急な変化よりも、安心できるペースと協力関係を大切にする傾向。周囲の状態を保ちながら進む選択が見られました。',C:'情報を整理し、構造や根拠を確かめてから進む傾向。精度や一貫性を手がかりに判断する場面が見られました。'};$('#resultTitle').textContent=names[top]+' — 優勢な観測傾向';$('#resultText').textContent=desc[top]+' なお、4指標は今回の選択ログに基づく相対的な比率です。DISCの正式な検査結果や診断ではありません。';$('#resultPanel').classList.add('active');$('#interactBox').style.display='none';log('DISC BEHAVIOR REPORT GENERATED.')}
+function start(){active=true;$('#landing').style.display='none';$('.sidehint').style.display='none';$('.corner').style.display='none';$('#gamePanel').classList.add('active');$('#interactBox').style.display='block';showInteract('SYSTEM ONLINE','都市ヘヨウコソ','光るノードをクリックして、住人と対話したり異常を調査してください。選択はDISCの4指標に記録されます。', [{label:'了解。探索ヲ開始スル',score:{},log:'探索セッション開始。',next:()=>{$('#interactBox').style.display='none';toast('OBSERVATION STARTED // 行動ログ収集開始')}}]);camera.position.set(0,12,29)}
+function reset(){Object.keys(scores).forEach(k=>scores[k]=0);logs=0;$('#logCount').textContent='000';$('#resultPanel').classList.remove('active');$('#gamePanel').classList.add('active');$('#interactBox').style.display='block';showInteract('SYSTEM ONLINE','再観測セッション','行動ログを初期化しました。別の選択で都市を探索してください。',[{label:'探索ヲ開始スル',score:{},log:'新規セッション開始。',next:()=>$('#interactBox').style.display='none'}])}
+$('#startBtn').onclick=start;$('#howBtn').onclick=()=>toast('クリック：調査 / ドラッグ：都市回転 / スクロール：ズーム / DISC 4指標を観測');$('#closeInteract').onclick=()=>$('#interactBox').style.display='none';$('#againBtn').onclick=reset;$('#backBtn').onclick=()=>{active=false;$('#resultPanel').classList.remove('active');$('#gamePanel').classList.remove('active');$('#landing').style.display='block';$('.sidehint').style.display='block';$('.corner').style.display='block';camera.position.copy(initialCam);targetRot=0};
+renderer.domElement.addEventListener('pointerdown',e=>{drag=true;down={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)});
+renderer.domElement.addEventListener('pointerup',e=>{if(!drag)return;drag=false;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.abs(dx)+Math.abs(dy)<7){pointer.x=e.clientX/innerWidth*2-1;pointer.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(hitMeshes,true);if(hits.length){let obj=hits[0].object;while(obj&&!obj.userData.def)obj=obj.parent;if(obj?.userData.def)inspect(obj.userData.def)}}});
+renderer.domElement.addEventListener('pointermove',e=>{if(drag&&active){targetRot+=(e.clientX-down.x)*.003;targetY=Math.max(-4,Math.min(5,targetY+(e.clientY-down.y)*.02));down={x:e.clientX,y:e.clientY}}});
+renderer.domElement.addEventListener('wheel',e=>{zoom=Math.max(15,Math.min(55,zoom+e.deltaY*.025))},{passive:true});
+$('#vrmFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;if(avatar){scene.remove(avatar.scene||avatar);avatar=null}if(avatarUrl)URL.revokeObjectURL(avatarUrl);avatarUrl=URL.createObjectURL(file);try{const gltf=await loader.loadAsync(avatarUrl);if(gltf.userData.vrm){avatar=gltf.userData.vrm;VRMUtils.removeUnnecessaryVertices(gltf.scene);VRMUtils.combineSkeletons(gltf.scene);avatar.scene.position.set(0,0,5);avatar.scene.scale.setScalar(1.15);scene.add(avatar.scene)}else{avatar=gltf.scene;avatar.position.set(0,0,5);avatar.scale.setScalar(1.4);scene.add(avatar)}toast('AVATAR LINK ESTABLISHED // VRoid読込完了');log('VRM AVATAR DATA LOADED.')}catch(err){console.error(err);toast('LOAD ERROR：VRM/GLB形式を確認してください')}});
+
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();city.rotation.y+=(targetRot-city.rotation.y)*.04;camera.position.z+=(zoom-camera.position.distanceTo(new THREE.Vector3(0,8,0)))*.012;camera.position.y+=(12+targetY-camera.position.y)*.025;camera.lookAt(0,4,0);nodes.forEach((n,i)=>{n.children[1].position.y=.1+Math.sin(t*1.5+i)*.12;n.children[0].rotation.z=t*.25;n.children[2].scale.setScalar(1+Math.sin(t*2+i)*.08)});pinkLight.intensity=30+Math.sin(t*2)*7;cyanLight.intensity=24+Math.cos(t*1.4)*5;if(avatar?.update)avatar.update(1/60);renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
