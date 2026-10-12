@@ -1,4 +1,0 @@
-VRoid Studioから書き出したVRMモデルを、このフォルダに player.vrm という名前で配置してください。
-読み込み先: assets/models/player/player.vrm
-GitHubにモデルをアップロードすれば、公開サイトから読み込めます。PC内のファイル選択は必要ありません。
-VRMのファイルサイズが大きい場合はGitHubのWebアップロード上限に注意してください。
