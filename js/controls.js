@@ -4,7 +4,7 @@ export function setupControls(camera,renderer){const keys={};const velocity=new 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 document.addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();if(e.code==='KeyE')window.dispatchEvent(new Event('interact-nearest'));if(e.code==='ShiftLeft'||e.code==='ShiftRight')record('移動','走行を開始',{D:1});});
 document.addEventListener('keyup',e=>keys[e.code]=false);
-renderer.domElement.addEventListener('click',()=>{if(!isMobile&&!locked&&document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.()});
+renderer.domElement.addEventListener('click',()=>{if(!isMobile&&!locked&&document.getElementById('dialog').classList.contains('hidden')&&document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.()});
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===renderer.domElement);
 document.addEventListener('mousemove',e=>{if(!locked)return;yaw-=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0018,-1.35,1.35)});
 const stickEl=document.getElementById('stick'),knob=document.getElementById('stickKnob');if(stickEl){stickEl.addEventListener('pointerdown',e=>{stickEl.setPointerCapture(e.pointerId);moveStick(e)});stickEl.addEventListener('pointermove',e=>{if(stickEl.hasPointerCapture(e.pointerId))moveStick(e)});const end=()=>{stick={x:0,y:0};knob.style.transform='translate(0px,0px)'};stickEl.addEventListener('pointerup',end);stickEl.addEventListener('pointercancel',end)}
