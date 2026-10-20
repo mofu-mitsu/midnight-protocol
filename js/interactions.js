@@ -29,7 +29,7 @@ function makeGreeting(item) {
   } else if (item.kind === 'caterpillar') {
     lines = ['「観測を開始する。君は何を知りたい？」', '「行動には必ず何らかの構造がある。」', '「……立ち止まった理由を聞いてもいいかね？」'];
   } else if (item.kind === 'observer') {
-    lines = ['「あ、来てくれたんだ。一緒に歩く？」', '「この街、少しずつ変わってる気がする。」', '「さっき見た景色、忘れたくないな。」'];
+    lines = observerFollow ? ['「一緒に歩いてるけど、どうしたの？」', '「この先も一緒に行こうか？」', '「何か気になるものを見つけた？」'] : ['「あ、来てくれたんだ。一緒に歩く？」', '「この街、少しずつ変わってる気がする。」', '「さっき見た景色、忘れたくないな。」'];
   } else {
     lines = [item.description];
   }
@@ -60,6 +60,7 @@ function getReply(item, label) {
   const arr = replies[item.kind]?.[label];
   return arr ? arr[Math.floor(Math.random() * arr.length)] : null;
 }
+window.addEventListener('city-notice',e=>{const n=document.getElementById('notice');n.textContent=e.detail?.text||'空に異変を観測した。';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),5000);});
 window.addEventListener('npc-approach',e=>{const n=document.getElementById('notice');n.textContent=e.detail.name+' がこちらに話しかけてきた：「'+e.detail.line+'」';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6000);if(e.detail.kind==='observer'||e.detail.kind==='darling')socialClue=true;});
 window.addEventListener('npc-social',e=>{const n=document.getElementById('notice');n.textContent=e.detail.a+' と '+e.detail.b+'：'+e.detail.line;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6000);if(e.detail.missionUnlock){mission='NPC同士の会話を追う';window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:'ミッション：NPC同士の会話から手がかりを探す'}}));}});
 function close(){document.getElementById('dialog').classList.add('hidden');active=null;window.dispatchEvent(new Event('npc-unfocus'));}
