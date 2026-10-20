@@ -108,7 +108,62 @@ export async function loadObserverNPC(){
 }
 
 let socialCooldown=8;
-export function updateCityLife(dt){socialCooldown-=dt;approachCooldown-=dt;if(approachCooldown<=0){approachCooldown=24+Math.random()*28;const candidates=npcAgents.filter(a=>a.interactable&&a.kind!=='observer'&&a.object.position.distanceTo(new THREE.Vector3(0,0,0))>0);if(candidates.length&&Math.random()<.75){const a=candidates[Math.floor(Math.random()*candidates.length)];window.dispatchEvent(new CustomEvent('npc-approach',{detail:{name:a.name,line:a.kind==='darling'?'ねえ、ちょっと聞いてほしいことがあるんだけど……':a.kind==='caterpillar'?'一つ、君の行動について質問してもいいかね？':'ねえ、あの建物、前からあったっけ？',kind:a.kind}}));}}if(socialCooldown>0)return;socialCooldown=12+Math.random()*18;const people=npcAgents.filter(a=>a.interactable&&a.wait<0.5);if(people.length<2)return;const a=people[Math.floor(Math.random()*people.length)];const b=people.filter(n=>n!==a)[Math.floor(Math.random()*(people.length-1))];if(a&&b&&a.object.position.distanceTo(b.object.position)<16){a.wait=3;b.wait=3;a.walking=b.walking=false;const line=a.kind==='caterpillar'?'「行動の反復性に意味があるのか、検証したい」':a.kind==='darling'?'「ねえ、さっき自販機の前で変な音しなかった？」':'「あの建物、前からあったっけ？」;window.dispatchEvent(new CustomEvent('npc-social',{detail:{a:a.name,b:b.name,line:line,missionUnlock:Math.random()<.35}}));}}
+export function updateCityLife(dt) {
+  socialCooldown -= dt;
+  approachCooldown -= dt;
+  if (approachCooldown <= 0) {
+    approachCooldown = 24 + Math.random() * 28;
+    const candidates = npcAgents.filter(agent =>
+      agent.interactable &&
+      agent.kind !== 'observer' &&
+      agent.object.position.distanceTo(new THREE.Vector3(0, 0, 0)) > 0
+    );
+    if (candidates.length && Math.random() < 0.75) {
+      const agent = candidates[Math.floor(Math.random() * candidates.length)];
+      const line = agent.kind === 'darling'
+        ? 'ねえ、ちょっと聞いてほしいことがあるんだけど……'
+        : agent.kind === 'caterpillar'
+          ? '一つ、君の行動について質問してもいいかね？'
+          : 'ねえ、あの建物、前からあったっけ？';
+      window.dispatchEvent(new CustomEvent('npc-approach', {
+        detail: { name: agent.name, line, kind: agent.kind }
+      }));
+    }
+  }
+
+  if (socialCooldown > 0) return;
+  socialCooldown = 12 + Math.random() * 18;
+  const people = npcAgents.filter(agent => agent.interactable && agent.wait < 0.5);
+  if (people.length < 2) return;
+
+  const a = people[Math.floor(Math.random() * people.length)];
+  const others = people.filter(agent => agent !== a);
+  const b = others[Math.floor(Math.random() * others.length)];
+  if (!a || !b || a.object.position.distanceTo(b.object.position) >= 16) return;
+
+  a.wait = 3;
+  b.wait = 3;
+  a.walking = false;
+  b.walking = false;
+
+  let line;
+  if (a.kind === 'caterpillar') {
+    line = '「行動の反復性に意味があるのか、検証したい」';
+  } else if (a.kind === 'darling') {
+    line = '「ねえ、さっき自販機の前で変な音しなかった？」';
+  } else {
+    line = '「あの建物、前からあったっけ？」';
+  }
+
+  window.dispatchEvent(new CustomEvent('npc-social', {
+    detail: {
+      a: a.name,
+      b: b.name,
+      line,
+      missionUnlock: Math.random() < 0.35
+    }
+  }));
+}
 export function updateTimedDoors(elapsed){const door=interactables.find(i=>i.name==='ネオン・アーカイブ');if(!door)return;const open=Math.floor(elapsed/45)%2===0;door.object.userData.open=open;door.hint=open?'Eキー / タップで入る':'閉鎖中：開くまで探索する';}
 
 function animateVrm(a,dt){const h=a.vrm?.humanoid;if(!h)return;const swing=Math.sin(performance.now()*.008*a.speed)*.32*(a.walking?1:0);const la=h.getNormalizedBoneNode('leftUpperArm'),ra=h.getNormalizedBoneNode('rightUpperArm'),ll=h.getNormalizedBoneNode('leftUpperLeg'),rl=h.getNormalizedBoneNode('rightUpperLeg');if(la)la.rotation.z=swing*.08;if(ra)ra.rotation.z=-swing*.08;if(ll)ll.rotation.x=swing;if(rl)rl.rotation.x=-swing;a.vrm.update(dt);}
