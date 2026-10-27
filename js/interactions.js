@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { interactables, LOCATIONS, scene } from './world.js';
+import { interactables, LOCATIONS, npcAgents, scene } from './world.js';
 import { record } from './analysis.js';
 import { cityMemory, updateMemory } from './memory.js';
 
@@ -61,27 +61,223 @@ export function setupInteractions(camera) {
     }
   }
 
-  function renderDialogActions(item) {
+  function getItemCategories(item) {
+    const isNpc = item.kind === 'darling' || item.kind === 'caterpillar' || item.kind === 'observer';
+    const isBench = item.kind === 'bench';
+
+    // 1. Dialogue Options (DISC 4 choices)
+    let dialogueOpts = [];
+    if (item.kind === 'darling') {
+      dialogueOpts = [
+        ['「退屈なら、今すぐ私のペースに合わせてついて来なさい」と主導権を握る', { D: 2 }],
+        ['「感情がログに漏れてるよ♡」とからかって笑わせる', { I: 2 }],
+        ['甘えた猫なで声を優しく受け止め、静かに見守る', { S: 2 }],
+        ['「今のその反応、“本音”と“演出”どっち？」と論理分析する', { C: 2 }]
+      ];
+      if (cityMemory.darlingIgnoredCount >= 1) {
+        dialogueOpts.unshift(['「この前放置してごめんね」と謝る', { S: 2, I: 1 }]);
+      }
+    } else if (item.kind === 'caterpillar') {
+      dialogueOpts = [
+        ['「結論を急ぎたまえ。街のデバッグを最優先で進めるぞ」', { D: 2 }],
+        ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
+        ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
+        ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
+      ];
+    } else if (item.kind === 'observer') {
+      dialogueOpts = [
+        ['「行くよ。雨の街をぐいぐい引っ張って案内してあげる」', { D: 2 }],
+        ['「ネオン・フィードに私たちの夜の写真をアップしようよ！」', { I: 2 }],
+        ['「少し冷えるね。雨宿りできる場所でも探しながら歩こう」', { S: 2 }],
+        ['「ここまでの観測データと雨の街の記憶構造を照合しよう」', { C: 2 }]
+      ];
+    } else if (item.kind === 'bench') {
+      dialogueOpts = [
+        ['深く腰を下ろして息を整え、次に向かうべき交差点を直断する', { D: 2 }],
+        ['『#雨宿りなう #深夜の第零区』とネオン・フィードに写真を共有する', { I: 2 }],
+        ['雨音のホワイトノイズに包まれて静かに休む（雨宿り休憩）', { S: 2 }],
+        ['ベンチの木目と雨水の流動ベクトルを分析する', { C: 2 }]
+      ];
+    } else {
+      dialogueOpts = getActionOptions(item);
+    }
+
+    // 2. Inventory Options (持ち物欄)
+    const inventoryOpts = [];
+    if (inventory.length === 0) {
+      inventoryOpts.push([
+        '（所持品がありません）自販機で飲料を購入したり街の調査で入手できます',
+        {}
+      ]);
+    } else {
+      const uniqueItems = Array.from(new Set(inventory));
+      for (const it of uniqueItems) {
+        const count = inventory.filter(x => x === it).length;
+        const countLabel = count > 1 ? ` (所持: ${count})` : '';
+        if (/コロネ|デニッシュ|パン|ソーダ|コーヒー|エスプレッソ|ミルク|ウォーター|ジュース|缶/.test(it)) {
+          inventoryOpts.push([`🎁【プレゼントする】${it}${countLabel}を贈る（好意と交流）`, { I: 2, S: 1 }]);
+        } else {
+          inventoryOpts.push([`🔍【手渡して見せる】${it}${countLabel}について意見を聞く`, { C: 2, I: 1 }]);
+        }
+      }
+    }
+
+    // 3. Mission Inquiry Options (ミッション・調査)
+    const missionOpts = [];
+    if (discoveredMissions.has('M_ANOMALY') && !completedMissions.has('M_ANOMALY')) {
+      missionOpts.push(['【ミッション調査】街の異常個所を即座に修復・鎮圧する手順を問う', { D: 2 }]);
+      missionOpts.push(['【ミッション対話】「街中でエラー起きてて笑う」と異常について雑談する', { I: 2 }]);
+      missionOpts.push(['【ミッション確認】異常現象による都市住人への被害がないか安否を確認する', { S: 2 }]);
+      missionOpts.push(['【ミッション照合】異常発生源のログ波形と通信エラーの相関データを照合する', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_NATSUE') && !completedMissions.has('M_NATSUE')) {
+      missionOpts.push(['【ミッション追跡】「夏江」という都民の行方を追跡している。情報を要求する', { D: 2 }]);
+      missionOpts.push(['【ミッション聞き込み】「夏江」って子を探してるんだけど、街で噂になってない？', { I: 2 }]);
+      missionOpts.push(['【ミッション尋ねる】古い学生証を落とした「夏江」さんを探していて……何か知りませんか？', { S: 2 }]);
+      missionOpts.push(['【ミッション照合】「夏江」という署名の生体ハッシュと都民台帳の照合結果を問う', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_PLATFORM0') && !completedMissions.has('M_PLATFORM0')) {
+      missionOpts.push(['【ミッション強行】存在しない「0番線」の改札へ強行突入する方法を問う', { D: 2 }]);
+      missionOpts.push(['【ミッション共有】都市伝説の「0番線」、フィードで超話題だから一緒に探そう！', { I: 2 }]);
+      missionOpts.push(['【ミッション相談】深夜バス停で見つけた「0番線の切符」……これ、何だと思う？', { S: 2 }]);
+      missionOpts.push(['【ミッション解析】非同期ダイヤグラムと0番線の運行規則の論理矛盾を解析する', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_CIRCUIT') && !completedMissions.has('M_CIRCUIT')) {
+      missionOpts.push(['【ミッション特定】ゴミ箱で拾った電子基板の出所を力づくで特定させる', { D: 2 }]);
+      missionOpts.push(['【ミッション話題】このピコピコ鳴る基板、めっちゃエモくない？ 何のパーツ？', { I: 2 }]);
+      missionOpts.push(['【ミッション確認】雨に濡れたゴミ箱にあった壊れた基板……大事な部品なのかな？', { S: 2 }]);
+      missionOpts.push(['【ミッション照合】ICチップのシリアル番号と都市管理端末のプロトコル互換性を照合する', { C: 2 }]);
+    }
+    if (missionOpts.length === 0) {
+      missionOpts.push([
+        '（現在、聞き込み可能な緊急ミッションはありません）',
+        {}
+      ]);
+    }
+
+    // 4. Special Actions (特殊行動)
+    const specialOpts = [];
+    if (item.kind === 'darling') {
+      specialOpts.push(['『ダーリンちゃんと深夜の街角で密会なう♡』とネオン・フィードに自慢する', { I: 2 }]);
+      specialOpts.push(['「この街の構造とあなたの存在理由を教えて」と深く問い詰める', { C: 2 }]);
+    } else if (item.kind === 'caterpillar') {
+      specialOpts.push(['芋虫をタップする（SLE/LSE物理介入テスト）', { D: 2 }]);
+      specialOpts.push(['『巨大な光る緑の芋虫と遭遇！デバッグ中らしい🐛』とネオン・フィードに共有する', { I: 2 }]);
+    } else if (item.kind === 'observer') {
+      specialOpts.push(
+        observerFollow
+          ? ['バイバイする（同行を解除）', { S: 1 }]
+          : ['「一緒に歩かない？」と誘う（同行開始）', { S: 2, I: 1 }]
+      );
+      specialOpts.push(['『雨天通りで観測者さんと合流！雨の夜の散策中』とネオン・フィードに投稿する', { I: 2 }]);
+    } else if (item.kind === 'bench') {
+      const p = item.position;
+      const darlingNear = npcAgents?.some(a => a.kind === 'darling' && a.object.position.distanceTo(p) < 14);
+      const caterpillarNear = npcAgents?.some(a => a.kind === 'caterpillar' && a.object.position.distanceTo(p) < 14);
+      const observerNear = observerFollow || npcAgents?.some(a => a.kind === 'observer' && a.object.position.distanceTo(p) < 14);
+
+      if (darlingNear) {
+        specialOpts.push(['「ねぇダーリンちゃん、一緒に雨宿りしよ？」とベンチに誘う', { I: 2, S: 1 }]);
+      }
+      if (observerNear) {
+        specialOpts.push([cityMemory.natsueNameRevealed ? '「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う' : '「観測者さん、少し雨宿りしていかない？」とベンチに誘う', { S: 2, I: 1 }]);
+      }
+      if (caterpillarNear) {
+        specialOpts.push(['「LSI芋虫、雨宿りしながら構造の話を聞かせて」と誘う', { C: 2, S: 1 }]);
+      }
+      specialOpts.push(['ベンチのメモを拾って文字の筆跡と紙の劣化を分析する', { C: 2 }]);
+    }
+
+    const categories = [
+      { id: 'dialogue', title: '💬 会話・対話', desc: 'DISC行動観測', options: dialogueOpts },
+      { id: 'inventory', title: `🎁 持ち物欄 (${inventory.length})`, desc: 'プレゼント・提示', options: inventoryOpts },
+      { id: 'mission', title: '📋 ミッション・調査', desc: '聞き込み・情報照合', options: missionOpts }
+    ];
+    if (specialOpts.length > 0) {
+      categories.push({ id: 'special', title: '⚡ 特殊行動', desc: '環境介入・独自アクション', options: specialOpts });
+    }
+
+    return {
+      isCategorized: isNpc || isBench,
+      categories,
+      directOptions: dialogueOpts
+    };
+  }
+
+  function renderDialogActions(item, selectedCategoryId = null) {
     const actions = document.getElementById('dialogActions');
     if (!actions) return;
     actions.replaceChildren();
 
-    const dynamicOptions = getActionOptions(item);
+    const data = getItemCategories(item);
 
-    for (const [label, weights] of dynamicOptions) {
-      const b = document.createElement('button');
-      b.textContent = label;
-      if (label.includes('プレゼント')) {
-        b.style.borderColor = 'rgba(255, 117, 200, 0.45)';
-        b.style.background = 'rgba(32, 14, 42, 0.9)';
-        b.style.color = '#ffd4f1';
-        b.style.boxShadow = '0 0 10px rgba(255, 117, 200, 0.2)';
-      } else if (label.includes('ミッション')) {
-        b.style.borderColor = 'rgba(114, 246, 255, 0.35)';
-        b.style.background = 'rgba(12, 28, 52, 0.85)';
+    if (!data.isCategorized) {
+      for (const [label, weights] of data.directOptions) {
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.addEventListener('click', () => handleOptionClick(item, label, weights));
+        actions.append(b);
       }
-      b.addEventListener('click', () => handleOptionClick(item, label, weights));
-      actions.append(b);
+      return;
+    }
+
+    if (!selectedCategoryId) {
+      // Root Category View
+      const rootDiv = document.createElement('div');
+      rootDiv.className = 'action-category-root';
+
+      data.categories.forEach(cat => {
+        const catBtn = document.createElement('button');
+        catBtn.innerHTML = `<strong>${cat.title}</strong><br><small style="color:var(--cyan);opacity:0.85;font-size:11px;">${cat.desc}</small>`;
+        if (cat.id === 'inventory') {
+          catBtn.style.borderColor = 'rgba(255, 117, 200, 0.45)';
+          catBtn.style.background = 'rgba(32, 16, 42, 0.9)';
+          catBtn.style.color = '#ffd6f3';
+        } else if (cat.id === 'mission') {
+          catBtn.style.borderColor = 'rgba(114, 246, 255, 0.35)';
+          catBtn.style.background = 'rgba(12, 28, 52, 0.9)';
+        }
+        catBtn.addEventListener('click', () => {
+          renderDialogActions(item, cat.id);
+        });
+        rootDiv.append(catBtn);
+      });
+
+      actions.append(rootDiv);
+    } else {
+      // Category Specific Options View
+      const optDiv = document.createElement('div');
+      optDiv.className = 'action-category-options';
+
+      const backBtn = document.createElement('button');
+      backBtn.className = 'category-back';
+      backBtn.textContent = '◀ カテゴリ一覧に戻る';
+      backBtn.addEventListener('click', () => {
+        renderDialogActions(item, null);
+      });
+      optDiv.append(backBtn);
+
+      const currentCat = data.categories.find(c => c.id === selectedCategoryId);
+      if (currentCat) {
+        currentCat.options.forEach(([label, weights]) => {
+          const b = document.createElement('button');
+          b.textContent = label;
+          if (label.includes('プレゼント')) {
+            b.style.borderColor = 'rgba(255, 117, 200, 0.5)';
+            b.style.background = 'rgba(36, 16, 46, 0.92)';
+            b.style.color = '#ffd4f1';
+          } else if (label.includes('ミッション')) {
+            b.style.borderColor = 'rgba(114, 246, 255, 0.35)';
+            b.style.background = 'rgba(12, 28, 52, 0.9)';
+          }
+          b.addEventListener('click', () => {
+            handleOptionClick(item, label, weights);
+          });
+          optDiv.append(b);
+        });
+      }
+
+      actions.append(optDiv);
     }
   }
 
@@ -327,7 +523,7 @@ export function setupInteractions(camera) {
         opts.push(['「ねぇダーリンちゃん、一緒に雨宿りしよ？」とベンチに誘う', { I: 2, S: 1 }]);
       }
       if (observerNear) {
-        opts.push(['「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う', { S: 2, I: 1 }]);
+        opts.push([cityMemory.natsueNameRevealed ? '「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う' : '「観測者さん、少し雨宿りしていかない？」とベンチに誘う', { S: 2, I: 1 }]);
       }
       if (caterpillarNear) {
         opts.push(['「LSI芋虫、雨宿りしながら構造の話を聞かせて」と誘う', { C: 2, S: 1 }]);
@@ -367,11 +563,12 @@ export function setupInteractions(camera) {
       ];
     }
 
+    const targetLabel = item.name || 'この地点';
     return [
-      ['主導権を握って即座に行動を起こす', { D: 2 }],
-      ['ネオン・フィードにこの地点の状況を実況する', { I: 2 }],
-      ['周囲の気配と安全を確認しながら見守る', { S: 2 }],
-      ['詳細なログと物理パラメータを解析する', { C: 2 }]
+      [`【直接突破】${targetLabel}の構造に迷わず直接介入し、状況を主導する`, { D: 2 }],
+      [`『${targetLabel}の周辺で異常なパルス観測！誰か見てる？』とフィードに実況する`, { I: 2 }],
+      [`【環境維持】${targetLabel}の周囲に危険がないか静かに見守り、安全を確保する`, { S: 2 }],
+      [`【構造解析】${targetLabel}の信号ログと物理波形データを照合して論理検証する`, { C: 2 }]
     ];
   }
 
@@ -487,10 +684,11 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('夏江ちゃん、少し雨宿り')) {
+    if (label.includes('少し雨宿りしていかない？')) {
       cityMemory.natsueAffection += 2;
-      record('雨宿り休憩', '夏江と雨宿りベンチで静かに休憩', { S: 3, I: 1 });
-      const line = '夏江「……雨宿り、なんだか久しぶり。昔、急な夕立でビルの軒下に駆け込んだ日のこと、思い出すな。街は騒がしいのに、ここだけ時間が止まってるみたい。……一緒にいてくれて、落ち着くよ。」';
+      const speaker = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
+      record('雨宿り休憩', `${speaker}と雨宿りベンチで静かに休憩`, { S: 3, I: 1 });
+      const line = `${speaker}「……雨宿り、なんだか久しぶり。昔、急な夕立でビルの軒下に駆け込んだ日のこと、思い出すな。街は騒がしいのに、ここだけ時間が止まってるみたい。……一緒にいてくれて、落ち着くよ。」`;
       showDialogResult(item, label, line, weights);
       return;
     }
@@ -502,13 +700,16 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('ネオン・フィード')) {
+    if (label.includes('ネオン・フィード') || label.includes('フィードに実況')) {
       record('フィード共有', label, weights);
-      const postContent = label.replace(/^『/, '').replace(/』.*$/, '');
+      let postContent = label.replace(/^『/, '').replace(/』.*$/, '');
+      if (postContent.includes('とフィードに')) postContent = postContent.split('とフィードに')[0];
+      if (postContent.includes('とネオン・フィードに')) postContent = postContent.split('とネオン・フィードに')[0];
+      postContent = postContent.trim();
       const likes = Math.floor(Math.random() * 240 + 60);
       const retweets = Math.floor(Math.random() * 45 + 12);
       window.dispatchEvent(new CustomEvent('neon-feed', {
-        detail: { text: postContent, likes, retweets }
+        detail: { text: postContent, location: item.name || '第零区・観測地点', likes, retweets }
       }));
       showDialogResult(item, label, `【NEON-FEED 送信完了】\n@都市観測者: 「${postContent}」\n▶ 反響：♥ ${likes} いいね / ⟳ ${retweets} リポスト\n（街のフィードであなたの観測が拡散され、住人の関心を集めています！）`, weights);
       return;
@@ -520,8 +721,8 @@ export function setupInteractions(camera) {
     }
 
     // プレゼントする（消費＋好感度・専用セリフ）
-    if (label.startsWith('【プレゼントする】')) {
-      const raw = label.replace('【プレゼントする】', '').replace('を贈る（好意と交流）', '').trim();
+    if (label.includes('【プレゼントする】')) {
+      const raw = label.replace('🎁', '').replace('【プレゼントする】', '').replace(/\(所持: \d+\)/, '').replace('を贈る（好意と交流）', '').trim();
       const idx = inventory.findIndex(i => raw.includes(i) || i.includes(raw));
       const gift = idx !== -1 ? inventory.splice(idx, 1)[0] : raw;
       window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
@@ -579,8 +780,8 @@ export function setupInteractions(camera) {
     }
 
     // 手渡して見せる
-    if (label.startsWith('【手渡して見せる】')) {
-      const raw = label.replace('【手渡して見せる】', '').replace('について意見を聞く', '').trim();
+    if (label.includes('【手渡して見せる】')) {
+      const raw = label.replace('🔍', '').replace('【手渡して見せる】', '').replace(/\(所持: \d+\)/, '').replace('について意見を聞く', '').trim();
       let line = '';
       if (item.kind === 'darling') {
         if (raw.includes('学生証') || raw.includes('メモ')) {
@@ -1715,7 +1916,7 @@ export function setupInteractions(camera) {
 
   window.addEventListener('inventory-add', e => {
     const item = e.detail?.item;
-    if (item && !inventory.includes(item)) {
+    if (item) {
       inventory.push(item);
       window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
     }
@@ -1755,6 +1956,10 @@ export function setupInteractions(camera) {
   });
 
   let current = null;
+
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+  }, 100);
 
   return {
     update() {

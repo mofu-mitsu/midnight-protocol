@@ -224,7 +224,7 @@ function setup3DVending(interactions) {
     {
       name: '夜のチョココロネ',
       color: 0x6e3d16,
-      effect: '夏江が昔よく夜に買った菓子パン。ほろ苦い甘み',
+      effect: '深夜のコンビニ定番の菓子パン。懐かしくほろ苦い甘み',
       weights: { I: 1, S: 1 }
     },
     {
@@ -244,7 +244,7 @@ function setup3DVending(interactions) {
       const card = document.createElement('div');
       card.className = 'vending-can-card';
 
-      // 3D Canvas preview of the can
+      // 2D Canvas preview of the can (lightweight, zero WebGL context leaks)
       const canvas = document.createElement('canvas');
       canvas.className = 'can-preview-canvas';
       card.append(canvas);
@@ -277,72 +277,100 @@ function setup3DVending(interactions) {
 
       grid.append(card);
 
-      // Render rotating 3D can in mini canvas
-      setupMiniCan3D(canvas, d.color);
+      // Render crisp cyberpunk beverage can in 2D canvas
+      drawMiniCyberCan2D(canvas, d);
     });
   });
 }
 
-function setupMiniCan3D(canvas, canColor) {
+function drawMiniCyberCan2D(canvas, drink) {
   const width = 90;
   const height = 90;
   canvas.width = width;
   canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(width, height);
+  const hexColor = '#' + drink.color.toString(16).padStart(6, '0');
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10);
-  camera.position.set(0, 0.3, 2.5);
+  ctx.clearRect(0, 0, width, height);
 
-  const light = new THREE.DirectionalLight(0xffffff, 2);
-  light.position.set(2, 3, 2);
-  scene.add(light);
-  scene.add(new THREE.AmbientLight(canColor, 1.2));
+  // Outer ambient neon glow circle
+  const glow = ctx.createRadialGradient(45, 45, 8, 45, 45, 42);
+  glow.addColorStop(0, `${hexColor}55`);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(45, 45, 42, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Cylinder can body
-  const canGeo = new THREE.CylinderGeometry(0.42, 0.42, 1.1, 24);
-  const canMat = new THREE.MeshStandardMaterial({
-    color: canColor,
-    metalness: 0.6,
-    roughness: 0.2,
-    emissive: canColor,
-    emissiveIntensity: 0.25
-  });
-  const can = new THREE.Mesh(canGeo, canMat);
-  scene.add(can);
+  const canX = 27;
+  const canY = 16;
+  const canW = 36;
+  const canH = 56;
+  const r = 5;
 
-  // Can top lid
-  const topGeo = new THREE.CylinderGeometry(0.40, 0.40, 0.06, 24);
-  const topMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.1 });
-  const topLid = new THREE.Mesh(topGeo, topMat);
-  topLid.position.y = 0.55;
-  scene.add(topLid);
+  // Can Body Gradient (metallic highlight)
+  const bodyGrad = ctx.createLinearGradient(canX, 0, canX + canW, 0);
+  bodyGrad.addColorStop(0, '#0d1522');
+  bodyGrad.addColorStop(0.2, hexColor);
+  bodyGrad.addColorStop(0.5, '#ffffff');
+  bodyGrad.addColorStop(0.8, hexColor);
+  bodyGrad.addColorStop(1, '#080c14');
 
-  let running = true;
-  function animateCan() {
-    if (!running) return;
-    can.rotation.y += 0.025;
-    topLid.rotation.y += 0.025;
-    renderer.render(scene, camera);
-    requestAnimationFrame(animateCan);
-  }
-  animateCan();
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(canX, canY, canW, canH, r);
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  ctx.strokeStyle = hexColor;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
 
-  // Clean up if canvas is detached
-  const observer = new MutationObserver(() => {
-    if (!document.contains(canvas)) {
-      running = false;
-      renderer.dispose();
-      canGeo.dispose();
-      canMat.dispose();
-      topGeo.dispose();
-      topMat.dispose();
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Top rim & pull tab
+  const topGrad = ctx.createLinearGradient(canX + 3, canY - 4, canX + canW - 3, canY);
+  topGrad.addColorStop(0, '#556677');
+  topGrad.addColorStop(0.5, '#e4ecf4');
+  topGrad.addColorStop(1, '#2b3948');
+  ctx.fillStyle = topGrad;
+  ctx.beginPath();
+  ctx.ellipse(45, canY + 1, canW / 2 - 2, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#c0d0e0';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Pull tab ring
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.ellipse(45, canY - 0.5, 4.5, 2.2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Bottom rim
+  ctx.fillStyle = '#1c2838';
+  ctx.beginPath();
+  ctx.ellipse(45, canY + canH - 1, canW / 2 - 2, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Holographic horizontal label stripe
+  ctx.fillStyle = 'rgba(7, 14, 28, 0.8)';
+  ctx.fillRect(canX + 1, canY + 15, canW - 2, 24);
+
+  // Neon text / logo on can
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 8px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEON', 45, canY + 25);
+  ctx.fillStyle = hexColor;
+  ctx.font = '7px monospace';
+  ctx.fillText('0.0 C', 45, canY + 34);
+
+  // Vertical highlight reflection slit
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.fillRect(canX + 12, canY + 3, 2.5, canH - 6);
+
+  ctx.restore();
 }
 
 function setupMinigame() {
@@ -530,8 +558,8 @@ function setupNeonFeed(interactions) {
     {
       id: 'f_2',
       avatar: '👤',
-      name: '観測者（夏江）',
-      handle: '@natsue_rain',
+      name: cityMemory.natsueNameRevealed ? '夏江' : '観測者',
+      handle: cityMemory.natsueNameRevealed ? '@natsue_rain' : '@rain_observer',
       time: '7分前',
       text: '夜中に食べるコンビニの菓子パンって、なんであんなに安心するんだろ。誰かに見つけてもらえたらいいな。 #雨宿り',
       location: '雨宿りベンチ',
@@ -652,7 +680,7 @@ function setupNeonFeed(interactions) {
     });
   });
 
-  // Post Submission
+  // Post Submission with Reactive NPC Comments
   function submitPost(text, location = '第零区・観測地点') {
     if (!text || !text.trim()) return;
     const newPost = {
@@ -671,6 +699,63 @@ function setupNeonFeed(interactions) {
     renderFeed();
     record('フィード実況', 'ネオン・フィードに実況投稿: ' + text.trim(), { I: 2 });
     interactions.toast('ネオン・フィードニ実況ヲ投稿シタ！');
+
+    // Trigger reactive NPC comment after brief realistic delay
+    setTimeout(() => {
+      const npcReplies = [
+        {
+          avatar: '🥺',
+          name: 'ダーリンちゃん',
+          handle: '@darling_0',
+          lines: [
+            '「ダーリン、その場所お気に入りなの？♡ 足元滑るから気をつけてね！」',
+            '「わ、ダーリンの実況みっけ♡ 退屈な夜のトランプ崩し、一緒にしよ〜？」',
+            '「ふふっ♡ リアルタイム実況なんて、意外と目立ちたがり屋さんやね？」'
+          ]
+        },
+        {
+          avatar: '🐛',
+          name: 'LSI芋虫',
+          handle: '@caterpillar_lsi',
+          lines: [
+            '「観測パケット受信したよ！🐛 その座標の電磁ノイズ率をデバッグキューに追加しておくね。」',
+            '「その地点の酸性雨降雨データと同期完了。記録ありがとうね！🐛」',
+            '「実況フィードのタイムスタンプ整合性を確認。正常に分散ログへ書き込まれたよ。🐛」'
+          ]
+        },
+        {
+          avatar: cityMemory.natsueNameRevealed ? '👧' : '👤',
+          name: cityMemory.natsueNameRevealed ? '夏江' : '観測者',
+          handle: cityMemory.natsueNameRevealed ? '@natsue_rain' : '@rain_observer',
+          lines: [
+            '「私もさっきその近く通ったよ。雨宿りできる場所、見つかった？」',
+            '「夜の街って、誰かの呟きが流れてくるだけで少し温かくなるね。」',
+            '「雨に濡れて風邪引かないように気をつけてね。」'
+          ]
+        }
+      ];
+
+      const chosenNpc = npcReplies[Math.floor(Math.random() * npcReplies.length)];
+      const chosenLine = chosenNpc.lines[Math.floor(Math.random() * chosenNpc.lines.length)];
+
+      const replyPost = {
+        id: 'f_rep_' + Date.now(),
+        avatar: chosenNpc.avatar,
+        name: chosenNpc.name,
+        handle: chosenNpc.handle,
+        time: 'たった今',
+        text: `@observer ${chosenLine}`,
+        location,
+        likes: Math.floor(Math.random() * 15 + 5),
+        reposts: Math.floor(Math.random() * 5 + 1),
+        liked: false
+      };
+
+      // Insert immediately below the user's post
+      posts.splice(1, 0, replyPost);
+      renderFeed();
+      interactions.toast(`【ネオン・フィード】${chosenNpc.name} から返信が届きました！`);
+    }, 2000);
   }
 
   sendBtn?.addEventListener('click', () => {

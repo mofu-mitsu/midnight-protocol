@@ -106,14 +106,6 @@
   </div>
   <div class="topbar-right">
     <div id="clock">02:17:00</div>
-    <button id="btnTopExit" class="topbar-exit-btn" title="観測終了・DISC解析結果を表示">
-      <svg class="exit-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-        <polyline points="16 17 21 12 16 7"></polyline>
-        <line x1="21" y1="12" x2="9" y2="12"></line>
-      </svg>
-      <span>観測終了</span>
-    </button>
   </div>
 </header>
 
@@ -159,7 +151,6 @@
   <button id="missionButton" class="hud-btn"><span class="icon">◆</span> ミッション</button>
   <button id="helpButton" class="hud-btn"><span class="icon">?</span> 操作方法</button>
   <button id="rainToggleButton" class="hud-btn"><span class="icon">☂</span> 雨天切り替え</button>
-  <button id="resetButton" class="hud-btn danger"><span class="icon">↺</span> 最初から</button>
 </div>
 
 <!-- 通常対話ダイアログ -->
@@ -360,7 +351,10 @@
       <div class="results-badge-wrap">
         <span class="results-tag">URBAN BEHAVIOR OBSERVATION LAB // CERTIFICATE</span>
         <h2>行動特性解析証明書（DISC PROFILE）</h2>
-        <span id="resMetaInfo" class="results-meta">観測完了 // RECORD VERIFIED</span>
+        <div class="results-meta-row">
+          <span id="resMetaInfo" class="results-meta">観測完了 // RECORD VERIFIED</span>
+          <span id="resSelfTypeBadge" class="results-self-badge hidden">自認：<strong id="resSelfTypeDisplay"></strong></span>
+        </div>
       </div>
       <button id="closeResults" class="modal-close-btn" aria-label="閉じる">✕</button>
     </div>
@@ -372,23 +366,6 @@
         <h3 id="resArchetypeTitle" class="archetype-title">【主導的変革者】Directive Pioneer</h3>
         <p id="resArchetypeSub" class="archetype-sub">迅速な決断と障害の強行突破を好む、結果志向の行動者</p>
         <p id="resArchetypeDesc" class="archetype-desc"></p>
-      </div>
-
-      <!-- 事前自認プロファイルとの照合・考察 -->
-      <div id="resSelfTypeComparison" class="results-section self-type-section">
-        <h4 class="section-title"><span class="accent-bar"></span> 事前自認プロファイルとの照合・考察</h4>
-        <div class="self-type-comparison-card">
-          <div class="comp-col">
-            <span class="comp-label">事前自認プロファイル</span>
-            <strong id="resSelfTypeDisplay" class="comp-val">未設定</strong>
-          </div>
-          <div class="comp-arrow">⟷</div>
-          <div class="comp-col">
-            <span class="comp-label">都市での観測DISC特性</span>
-            <strong id="resObservedTypeDisplay" class="comp-val">解析完了</strong>
-          </div>
-        </div>
-        <p id="resSelfTypeAnalysisText" class="self-type-analysis-text">自由記述の自認傾向と深夜都市での実行動ログを対比。直観や論理をどう現実に発露させていたかを総括します。</p>
       </div>
 
       <!-- ダーリンちゃんからの特別講評 -->

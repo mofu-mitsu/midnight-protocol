@@ -104,9 +104,8 @@ export class ResultsController {
   }
 
   setupListeners() {
-    // 観測終了ボタン群
+    // 観測終了ボタン
     const triggerButtons = [
-      document.getElementById('btnTopExit'),
       document.getElementById('exitButton')
     ];
     triggerButtons.forEach(btn => {
@@ -302,20 +301,18 @@ export class ResultsController {
     if (subEl) subEl.textContent = archetype.sub;
     if (descEl) descEl.textContent = archetype.desc;
 
-    // 事前自認プロファイルとの照合
+    // 事前自認プロファイル（結果カード上のバッジ表示）
     const selfInputEl = document.getElementById('selfTypeInput');
     const selfVal = selfInputEl?.value.trim();
+    const selfBadge = document.getElementById('resSelfTypeBadge');
     const selfDisplay = document.getElementById('resSelfTypeDisplay');
-    const obsDisplay = document.getElementById('resObservedTypeDisplay');
-    const selfAnalysis = document.getElementById('resSelfTypeAnalysisText');
 
-    if (selfDisplay) selfDisplay.textContent = selfVal || '（事前入力なし）';
-    if (obsDisplay) obsDisplay.textContent = archetype.title;
-    if (selfAnalysis) {
+    if (selfBadge && selfDisplay) {
       if (selfVal) {
-        selfAnalysis.innerHTML = `事前の自認「<strong style="color:var(--pink);">${selfVal}</strong>」と、深夜都市でのリアルタイム行動から観測された「<strong style="color:var(--cyan);">${archetype.title}</strong>」を照合。内面での自己認識が、深夜の極限環境においてどのように発露したかを客観的に示しています。`;
+        selfDisplay.textContent = selfVal;
+        selfBadge.classList.remove('hidden');
       } else {
-        selfAnalysis.textContent = '事前自認プロファイルは未入力です。都市での純粋な実行動（歩行、調査、介入、静観）からDISC特性が客観抽出されました。';
+        selfBadge.classList.add('hidden');
       }
     }
 
@@ -506,6 +503,14 @@ export class ResultsController {
     ctx.font = 'bold 15px "SF Mono", monospace';
     ctx.fillText('URBAN BEHAVIOR OBSERVATION LAB // CERTIFICATE', 60, 80);
 
+    const selfInputEl = document.getElementById('selfTypeInput');
+    const selfVal = selfInputEl?.value.trim();
+    if (selfVal) {
+      ctx.fillStyle = '#ff75c8';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText(`【事前自認】 ${selfVal}`, 640, 80);
+    }
+
     ctx.fillStyle = '#ffffff';
     ctx.font = '800 32px -apple-system, sans-serif';
     ctx.fillText('深夜都市行動解析計画 | 行動特性証明書', 60, 122);
@@ -607,8 +612,6 @@ export class ResultsController {
     ctx.fillText(arch.avoided, 85, blockY + 160);
 
     // 事前自認プロファイル＆ダーリンちゃん講評
-    const selfInputEl = document.getElementById('selfTypeInput');
-    const selfVal = selfInputEl?.value.trim();
     const darlingComment = this.getDarlingComment(arch.title, scores);
 
     const infoY = 945;
