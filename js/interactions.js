@@ -161,7 +161,7 @@ export function setupInteractions(camera) {
       specialOpts.push(['『ダーリンちゃんと深夜の街角で密会なう♡』とネオン・フィードに自慢する', { I: 2 }]);
       specialOpts.push(['「この街の構造とあなたの存在理由を教えて」と深く問い詰める', { C: 2 }]);
     } else if (item.kind === 'caterpillar') {
-      specialOpts.push(['芋虫をタップする（SLE/LSE物理介入テスト）', { D: 2 }]);
+      specialOpts.push(['芋虫をタップする（SLE物理介入テスト）', { D: 2 }]);
       specialOpts.push(['『巨大な光る緑の芋虫と遭遇！デバッグ中らしい🐛』とネオン・フィードに共有する', { I: 2 }]);
     } else if (item.kind === 'observer') {
       specialOpts.push(
@@ -406,7 +406,7 @@ export function setupInteractions(camera) {
 
     if (item.kind === 'caterpillar') {
       const opts = [
-        ['芋虫をタップする（SLE/LSE物理介入テスト）', { D: 2 }],
+        ['芋虫をタップする（SLE物理介入テスト）', { D: 2 }],
         ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
         ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
         ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
@@ -630,7 +630,7 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('学生証') || (item.name === '忘失物ボックス' && (label.includes('確保') || label.includes('調査')))) {
+    if (item.name === '忘失物ボックス' && (label.includes('確保') || label.includes('調査') || label.includes('学生証'))) {
       cityMemory.natsueReceiptFound = true;
       if (!inventory.includes('古い学生証（名前：夏江）')) {
         inventory.push('古い学生証（名前：夏江）');
@@ -642,7 +642,7 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('ベンチのメモ') || label.includes('レシート')) {
+    if (item.kind === 'bench' && (label.includes('ベンチのメモ') || label.includes('レシート'))) {
       cityMemory.natsueReceiptFound = true;
       if (!inventory.includes('濡れたレシート（筆跡：夏江）')) {
         inventory.push('濡れたレシート（筆跡：夏江）');
@@ -654,7 +654,7 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('0番線の切符')) {
+    if (item.kind === 'bus_stop' && (label.includes('0番線の切符') || label.includes('引き抜く'))) {
       if (!inventory.includes('0番線の古びた切符')) {
         inventory.push('0番線の古びた切符');
         window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
@@ -665,7 +665,7 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (label.includes('廃棄された電子基板')) {
+    if (item.kind === 'trash' && (label.includes('廃棄された電子基板') || label.includes('引き揚げる') || label.includes('基板'))) {
       if (!inventory.includes('廃棄された電子基板')) {
         inventory.push('廃棄された電子基板');
         window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
@@ -800,8 +800,10 @@ export function setupInteractions(camera) {
           line = 'LSI芋虫「学生証の印字フォントとインク劣化度から推定して、約3〜5年前の記録媒体だね。都民の遺失物かな？🐛」';
         } else if (raw.includes('0番線')) {
           line = 'LSI芋虫「この切符の磁気ストライプ、存在しないプロトコル番号が刻まれているよ。ダイヤグラムの破綻を検知！🐛」';
+          completeMission('M_PLATFORM0', '【ミッション達成！】『幻の0番線』の切符解析が完了しました！');
         } else if (raw.includes('基板') || raw.includes('媒体')) {
           line = 'LSI芋虫「おお！ バスラインの基板じゃないか！🐛 これがあれば端末の論理修復ができるよ！」';
+          completeMission('M_CIRCUIT', '【ミッション達成！】『廃棄回路の解析』が完了しました！');
         } else if (raw.includes('抜け殻')) {
           line = 'LSI芋虫「わあっ！ 僕の脱皮殻じゃないか！🐛 まさか回収してくれていたなんて……再資源化プロトコルに回すよ、ありがとう！🐛」';
         } else {
@@ -812,12 +814,17 @@ export function setupInteractions(camera) {
         if (raw.includes('学生証')) {
           cityMemory.natsueAffection += 3;
           cityMemory.natsueReceiptFound = true;
-          line = `${obsName}「……！ その学生証、私の……？ ……うん、見覚えがある。私はずっと、自分が誰かを探してたんだ。『夏江』……それが私なのかな。」`;
-        } else if (raw.includes('メモ')) {
+          cityMemory.natsueNameRevealed = true;
+          line = `${obsName}「……！ その学生証、私の……？ ……うん、見覚えがある。私はずっと、自分が誰かを探してたんだ。『夏江』……それが私なのかな。見つけてくれて、本当にありがとう。」`;
+          completeMission('M_NATSUE', '【ミッション達成！】『失われた都民・夏江の捜索』が完了しました！');
+        } else if (raw.includes('メモ') || raw.includes('レシート')) {
           cityMemory.natsueAffection += 2;
-          line = `${obsName}「ベンチにあったメモ……。誰かの独り言みたいだけど、どこか昔の自分の文字に似てる気がする。」`;
+          cityMemory.natsueNameRevealed = true;
+          line = `${obsName}「ベンチにあったメモ……。誰かの独り言みたいだけど、どこか昔の自分の文字に似てる気がする。『誰も知らない私を見つけて』って……見つけてくれたんだね。」`;
+          completeMission('M_NATSUE', '【ミッション達成！】『失われた都民・夏江の捜索』が完了しました！');
         } else if (raw.includes('0番線')) {
           line = `${obsName}「0番線……終電が終わったあとに、どこか遠くへ行きたくてホームに立ってた夜を思い出すな。」`;
+          completeMission('M_PLATFORM0', '【ミッション達成！】『幻の0番線』に関する証言を記録しました！');
         } else if (raw.includes('基板')) {
           line = `${obsName}「機械の部品？ 雨に濡れてるのに、まだ小さく青く光ってるね。」`;
         } else if (raw.includes('写真')) {
@@ -844,16 +851,30 @@ export function setupInteractions(camera) {
         else {
           cityMemory.natsueAffection += 2;
           cityMemory.natsueReceiptFound = true;
-          line = '観測者「……夏江？ どうしてその名前を知ってるの……？ 私、ずっと誰かに見つけてほしかったのかもしれない……。」';
+          cityMemory.natsueNameRevealed = true;
+          line = '観測者「……夏江？ どうしてその名前を知ってるの……？ 私、ずっと誰かに見つけてほしかったのかもしれない……。私を思い出してくれて、ありがとう。」';
+          completeMission('M_NATSUE', '【ミッション達成！】『失われた都民・夏江の捜索』が完了しました！');
         }
       } else if (label.includes('0番線')) {
-        if (item.kind === 'darling') line = 'ダーリンちゃん「0番線？ 存在しない幽霊路線やね。終点に行ったら、この都市の裏側のデバッグルームに出るのかも♡」';
-        else if (item.kind === 'caterpillar') line = 'LSI芋虫「路線図には記載されていない非同期プロトコルだね。🐛 ダイヤグラムの循環参照バグが原因と推定されるよ。」';
-        else line = '観測者「0番線……夜が深くなると、誰もいないバス停の向こうに微かなアナウンスが聞こえることがあるの。」';
+        if (item.kind === 'darling') {
+          line = 'ダーリンちゃん「0番線？ 存在しない幽霊路線やね。終点に行ったら、この都市の裏側のデバッグルームに出るのかも♡」';
+          completeMission('M_PLATFORM0', '【ミッション達成！】『幻の0番線』の運行真相についての情報を獲得しました！');
+        } else if (item.kind === 'caterpillar') {
+          line = 'LSI芋虫「路線図には記載されていない非同期プロトコルだね。🐛 ダイヤグラムの循環参照バグが原因と推定されるよ。」';
+          completeMission('M_PLATFORM0', '【ミッション達成！】『幻の0番線』の論理エラー解析が完了しました！');
+        } else {
+          line = '観測者「0番線……夜が深くなると、誰もいないバス停の向こうに微かなアナウンスが聞こえることがあるの。」';
+          completeMission('M_PLATFORM0', '【ミッション達成！】『幻の0番線』に関する証言を記録しました！');
+        }
       } else if (label.includes('電子基板')) {
-        if (item.kind === 'darling') line = 'ダーリンちゃん「ゴミ箱の基板？ 都市管理AIの端末から引っこ抜かれた残骸やね。暗号化されたメモリが生きてるかも♡」';
-        else if (item.kind === 'caterpillar') line = 'LSI芋虫「このICチップは都市照明の同期クロック生成器だね。🐛 バス幅のピン折れを直せば信号解析機になるよ！」';
-        else line = '観測者「小さく青く点滅してるね……。街のどこかの機械が、誰かの声を探して呼んでるみたい。」';
+        if (item.kind === 'darling') {
+          line = 'ダーリンちゃん「ゴミ箱の基板？ 都市管理AIの端末から引っこ抜かれた残骸やね。暗号化されたメモリが生きてるかも♡」';
+        } else if (item.kind === 'caterpillar') {
+          line = 'LSI芋虫「このICチップは都市照明の同期クロック生成器だね。🐛 バス幅のピン折れを直せば信号解析機になるよ！」';
+          completeMission('M_CIRCUIT', '【ミッション達成！】『廃棄回路の解析』が完了しました！');
+        } else {
+          line = '観測者「小さく青く点滅してるね……。街のどこかの機械が、誰かの声を探して呼んでるみたい。」';
+        }
       }
       record('ミッション聞き込み', item.name + 'への聞き込み：' + label, weights);
       showDialogResult(item, label, line, weights);
@@ -868,7 +889,7 @@ export function setupInteractions(camera) {
 
       const tapLines = [
         '「やめろ！ お前はSLEか？」',
-        '「やめろ！ お前はLSEか？」',
+        '「やめろ！ SLEの力づく介入はお断りだ！」',
         '「境界線！ 境界線を守りたまえ！」',
         '「接触回数を記録するな！ 記録を消せ！」',
         '「なぜタップする？ 理由を述べよ！」',
@@ -1523,7 +1544,7 @@ export function setupInteractions(camera) {
         choicesEl.append(b);
       });
     } else if (eventIdx === 4) {
-      // 5. イベント：SLE/LSE物理介入・タップテスト
+      // 5. イベント：SLE物理介入・タップテスト
       inputWrap?.classList.add('hidden');
       promptEl.textContent = '「君は街中で僕をよく観察しているね。🐛 これはSLE（感覚主導）の力学的フィードバックテストなのかな？」';
       const choices = [
@@ -1552,10 +1573,10 @@ export function setupInteractions(camera) {
       promptEl.textContent = lines[Math.floor(Math.random() * lines.length)];
 
       const shortcuts = [
-        { text: '「論理的に正しいと思う（整合性）」', weights: { C: 3 } },
-        { text: '「感情は数式じゃないよ（直感・感化）」', weights: { I: 3 } },
-        { text: '「静かに見守るのが一番だ（安定）」', weights: { S: 3 } },
-        { text: '「結論を早く出しなさい（主導決断）」', weights: { D: 3 } }
+        { text: '「論理的に正しいと思う」', weights: { C: 3 } },
+        { text: '「感情は数式じゃないよ」', weights: { I: 3 } },
+        { text: '「静かに見守るのが一番だ」', weights: { S: 3 } },
+        { text: '「結論を早く出しなさい」', weights: { D: 3 } }
       ];
       shortcuts.forEach(s => {
         const b = document.createElement('button');

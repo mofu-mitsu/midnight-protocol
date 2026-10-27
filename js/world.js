@@ -60,13 +60,18 @@ window.addEventListener('npc-follow', e => {
 window.addEventListener('npc-call-nearest', e => {
   const p = e.detail?.position || window.playerWorldPosition;
   if (!p) return;
-  const candidates = npcAgents.filter(a => a.interactable && a.kind !== 'observer' && !a.approaching);
+  const candidates = npcAgents.filter(a => a.interactable && (!followingObserver || a.kind !== 'observer'));
   const nearest = candidates.sort((a, b) => a.object.position.distanceTo(p) - b.object.position.distanceTo(p))[0];
   if (nearest) {
     pendingApproach = nearest;
     nearest.approaching = true;
-    nearest.speed = 3.2; // Rush over
+    nearest.speed = 4.2; // Rush over quickly
+    nearest.approachTimeout = 45; // Generous timeout to cross long distances
     nearest.wait = 9999;
+    const callName = (nearest.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : nearest.name;
+    window.dispatchEvent(new CustomEvent('city-notice', {
+      detail: { text: `（救援信号受信！${callName}が全速力で駆けつけている……！）` }
+    }));
   }
 });
 
@@ -247,10 +252,10 @@ export function updateNPCs(dt, playerPosition) {
       const dx = playerPosition.x - a.object.position.x;
       const dz = playerPosition.z - a.object.position.z;
       const dist = Math.hypot(dx, dz);
-      a.approachTimeout = (a.approachTimeout || 14) - dt;
+      a.approachTimeout = (a.approachTimeout || 25) - dt;
 
-      if (a.approachTimeout <= 0 || dist > 7.5) {
-        // Player ran away, quietly abort approach
+      if (a.approachTimeout <= 0 || dist > 60) {
+        // Player ran away or timed out, quietly abort approach
         a.walking = false;
         a.approaching = false;
         a.speed = a.kind === 'caterpillar' ? 0.65 : 1.05;
@@ -1146,21 +1151,21 @@ export function updateCityLife(dt) {
     }
 
     const player = window.playerWorldPosition;
-    // Look for candidates within 12 meters (nearby and natural)
-    const candidates = npcAgents.filter(agent => agent.interactable && agent.kind !== 'observer' && !agent.approaching && Math.hypot(agent.object.position.x - player.x, agent.object.position.z - player.z) < 12);
-    if (candidates.length && Math.random() < 0.75) {
+    // Look for candidates within 22 meters
+    const candidates = npcAgents.filter(agent => agent.interactable && (!followingObserver || agent.kind !== 'observer') && !agent.approaching && Math.hypot(agent.object.position.x - player.x, agent.object.position.z - player.z) < 22);
+    if (candidates.length && Math.random() < 0.85) {
       pendingApproach = candidates.sort((a, b) => a.object.position.distanceTo(player) - b.object.position.distanceTo(player))[0];
       pendingApproach.approaching = true;
-      pendingApproach.speed = 2.2; // Brisk walk pace
-      pendingApproach.approachTimeout = 14;
+      pendingApproach.speed = 2.4; // Brisk walk pace
+      pendingApproach.approachTimeout = 25;
       pendingApproach.wait = 9999;
       const approachName = (pendingApproach.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : pendingApproach.name;
       window.dispatchEvent(new CustomEvent('city-notice', {
         detail: { text: `（足音……${approachName}がこちらへ小走りで近づいてくる）` }
       }));
-      approachCooldown = 75 + Math.random() * 45; // Natural cooldown ~2 minutes
+      approachCooldown = 28 + Math.random() * 22; // Natural cooldown ~30-50s
     } else {
-      approachCooldown = 14;
+      approachCooldown = 8;
     }
   }
 

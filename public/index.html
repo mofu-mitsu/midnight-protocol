@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#070912">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GNTX973GET"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GNTX973GET');
+  </script>
+
+  <!-- Google Search Console Verification -->
+  <meta name="google-site-verification" content="b7ayC_ApkqZfpMCdnvnmZPQtpDMW8FATSpv0q1T2uV4" />
+
+  <!-- Core SEO Metadata -->
+  <title>深夜都市行動解析計画 | リアルタイム行動DISC診断・サイバーパンク都市心理観測</title>
+  <meta name="description" content="選択肢ではなく「リアルタイムな実行動」から性格特性を客観観測。雨とネオンのサイバーパンク都市を探索し、D(主導)・I(感化)・S(安定)・C(慎重)の行動傾向を解析する新感覚の体験型心理観測プロトコル。">
+  <meta name="keywords" content="深夜都市行動解析計画, MIDNIGHT PROTOCOL, DISC診断, 行動心理, サイバーパンク, 心理テスト, リアルタイム観測, Niラボ, 性格診断">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://midnight-protocol-iota.vercel.app/">
+
+  <!-- Open Graph / Facebook / Discord -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://midnight-protocol-iota.vercel.app/">
+  <meta property="og:title" content="深夜都市行動解析計画 | リアルタイム行動DISC診断・サイバーパンク都市心理観測">
+  <meta property="og:description" content="選択肢ではなく「リアルタイムな実行動」から性格特性を客観観測。雨とネオンのサイバーパンク都市を探索し、DISC行動傾向を解析する新感覚の体験型心理観測プロトコル。">
+  <meta property="og:image" content="https://midnight-protocol-iota.vercel.app/ogp.png">
+  <meta property="og:image:secure_url" content="https://midnight-protocol-iota.vercel.app/ogp.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="深夜都市行動解析計画 | MIDNIGHT PROTOCOL">
+  <meta property="og:locale" content="ja_JP">
+
+  <!-- Twitter / X Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://midnight-protocol-iota.vercel.app/">
+  <meta name="twitter:title" content="深夜都市行動解析計画 | リアルタイム行動DISC診断・サイバーパンク都市心理観測">
+  <meta name="twitter:description" content="選択肢ではなく「リアルタイムな実行動」から性格特性を客観観測。雨とネオンのサイバーパンク都市を探索し、DISC行動傾向を解析する新感覚の体験型心理観測プロトコル。">
+  <meta name="twitter:image" content="https://midnight-protocol-iota.vercel.app/ogp.png">
+
+  <!-- Favicon (SVG and vector fallback) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Schema.org JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "深夜都市行動解析計画 | MIDNIGHT PROTOCOL",
+    "alternateName": "MIDNIGHT PROTOCOL",
+    "url": "https://midnight-protocol-iota.vercel.app/",
+    "applicationCategory": "GameApplication, LifestyleApplication",
+    "operatingSystem": "All",
+    "inLanguage": "ja",
+    "description": "選択肢ではなくリアルタイムな実行動から性格特性を客観観測。雨とネオンのサイバーパンク都市を探索し、DISC行動傾向を解析する新感覚の体験型心理観測プロトコル。",
+    "image": "https://midnight-protocol-iota.vercel.app/ogp.png",
+    "screenshot": "https://midnight-protocol-iota.vercel.app/ogp.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "JPY"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div id="scene" aria-label="一人称視点の夜の都市"></div>
+<div class="scanlines"></div>
+<div class="ambient-glow"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-emblem-wrap">
+      <svg class="brand-svg-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="22,2 40,12 40,32 22,42 4,32 4,12" stroke="url(#topGlow)" stroke-width="1.8" fill="rgba(10,24,46,0.7)"/>
+        <circle cx="22" cy="22" r="9" stroke="#72f6ff" stroke-width="1.2" stroke-dasharray="3 2"/>
+        <polygon points="22,14 25,22 22,30 19,22" fill="#72f6ff"/>
+        <circle cx="22" cy="22" r="2.2" fill="#ff75c8"/>
+        <line x1="8" y1="22" x2="13" y2="22" stroke="#bf55ec" stroke-width="1.5"/>
+        <line x1="31" y1="22" x2="36" y2="22" stroke="#bf55ec" stroke-width="1.5"/>
+        <defs>
+          <linearGradient id="topGlow" x1="4" y1="2" x2="40" y2="42" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#72f6ff"/>
+            <stop offset="0.5" stop-color="#bf55ec"/>
+            <stop offset="1" stop-color="#ff75c8"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="brand-text-block">
+      <span class="brand-title">MIDNIGHT PROTOCOL</span>
+      <span class="brand-sub">URBAN BEHAVIOR LAB // BUILD 0.6</span>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <span id="weatherStatus" class="weather-badge">🌧️ ACID RAIN 観測中</span>
+  </div>
+  <div class="topbar-right">
+    <div id="clock">02:17:00</div>
+  </div>
+</header>
+
+<section class="mission">
+  <div class="district-badge">LOCATION</div>
+  <strong id="district">第零区・雨天通り</strong>
+  <span id="objective">街ノ異常（配電盤・信号・看板）ヲ調査・修復セヨ。</span>
+</section>
+
+<div class="crosshair"><i></i><b></b></div>
+<div id="notice" class="notice">接続完了。行動ハスベテ、都市ノ管理システムニ記録サレテイル。</div>
+
+<div id="interact" class="interact hidden">
+  <div class="interact-box">
+    <small id="targetType">観測対象</small>
+    <strong id="targetName">端末</strong>
+    <span id="targetHint">Eキー / タップで調べる</span>
+  </div>
+</div>
+
+<div class="hud-left">
+  <div class="hud-label-row">
+    <span class="hud-label">OBSERVATION LOG</span>
+    <span id="logCount" class="log-badge">LOG 000</span>
+  </div>
+  <div class="meter"><span id="meterFill"></span></div>
+  <div class="disc-preview-row">
+    <span id="discHint">行動傾向：未解析</span>
+  </div>
+  <div class="disc-bars">
+    <div class="disc-bar-row"><span class="d-label">D</span><div class="bar-track"><div id="barD" class="bar-fill d"></div></div><span id="valD" class="val">0%</span></div>
+    <div class="disc-bar-row"><span class="i-label">I</span><div class="bar-track"><div id="barI" class="bar-fill i"></div></div><span id="valI" class="val">0%</span></div>
+    <div class="disc-bar-row"><span class="s-label">S</span><div class="bar-track"><div id="barS" class="bar-fill s"></div></div><span id="valS" class="val">0%</span></div>
+    <div class="disc-bar-row"><span class="c-label">C</span><div class="bar-track"><div id="barC" class="bar-fill c"></div></div><span id="valC" class="val">0%</span></div>
+  </div>
+</div>
+
+<div class="hud-right">
+  <button id="exitButton" class="hud-btn highlight-exit"><span class="icon">⏻</span> 観測終了（解析）</button>
+  <button id="feedButton" class="hud-btn"><span class="icon">📱</span> ネオン・フィード</button>
+  <button id="logButton" class="hud-btn"><span class="icon">▤</span> 行動ログ</button>
+  <button id="inventoryButton" class="hud-btn"><span class="icon">◇</span> 持ち物</button>
+  <button id="missionButton" class="hud-btn"><span class="icon">◆</span> ミッション</button>
+  <button id="helpButton" class="hud-btn"><span class="icon">?</span> 操作方法</button>
+  <button id="rainToggleButton" class="hud-btn"><span class="icon">☂</span> 雨天切り替え</button>
+</div>
+
+<!-- 通常対話ダイアログ -->
+<div id="dialog" class="dialog hidden">
+  <div class="dialog-head">
+    <span id="dialogTag">OBSERVED ENTITY // SYSTEM</span>
+    <button id="closeDialog" aria-label="閉じる">×</button>
+  </div>
+  <div class="dialog-speaker-row">
+    <div class="dialog-speaker-avatar" id="dialogAvatar"></div>
+    <h2 id="dialogTitle">観測対象</h2>
+  </div>
+  <p id="dialogText"></p>
+  <div id="dialogActions" class="dialog-actions"></div>
+</div>
+
+<!-- NPCから話しかけられた時の専用 遭遇イベント＆記述モーダル -->
+<div id="directInputModal" class="direct-input-modal hidden">
+  <div class="direct-input-card">
+    <div class="direct-input-head">
+      <div class="npc-profile-row">
+        <span class="direct-input-avatar" id="inputAvatar">🥺</span>
+        <div>
+          <span class="direct-input-tag" id="inputTag">INCOMING EVENT // 接触観測</span>
+          <h3 id="inputSpeakerName">ダーリンちゃん</h3>
+        </div>
+      </div>
+      <button id="closeDirectInput" aria-label="閉じる">✕</button>
+    </div>
+    <p id="inputSpeechPrompt" class="input-speech-prompt">「ねぇ、ダーリン♡」</p>
+
+    <!-- イベント固有のアクション・選択肢コンテナ -->
+    <div id="npcEventChoices" class="npc-event-choices"></div>
+
+    <!-- 自由入力トグルセクション -->
+    <div id="directInputSection" class="input-field-wrap">
+      <textarea id="directInputText" placeholder="自由に返答を入力（感情・論理・意思など）..." rows="2"></textarea>
+      <div class="input-actions-bar">
+        <button id="sendDirectInput" class="send-btn">自由返答を送信 <span>↵</span></button>
+      </div>
+    </div>
+
+    <!-- NPCの応答表示領域（選択肢または入力完了後にモーダル内で表示） -->
+    <div id="directInputReplyWrap" class="direct-input-reply-wrap hidden">
+      <div class="direct-input-reply-box">
+        <span class="reply-badge">REPLY // 応答観測</span>
+        <p id="directInputReplyText" class="reply-text"></p>
+      </div>
+      <button id="directInputDismissBtn" class="dismiss-btn">▶ 了解して立ち去る（会話終了）</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3D 自販機飲料セレクター モーダル -->
+<div id="vendingModal" class="vending-modal hidden">
+  <div class="vending-card">
+    <div class="vending-head">
+      <div>
+        <span class="vending-tag">NEON VENDING DISPENSER</span>
+        <h3>夜光自販機 // 3Dセレクター</h3>
+      </div>
+      <button id="closeVending" aria-label="閉じる">✕</button>
+    </div>
+    <p class="vending-desc">缶をタップまたはクリックして直感的に購入できます。成分により知覚や行動モデルに変化が生じます。</p>
+    <div class="vending-cans-grid" id="vendingCansGrid"></div>
+  </div>
+</div>
+
+<!-- 配線復旧ミニゲームモーダル -->
+<div id="minigameModal" class="minigame-modal hidden">
+  <div class="minigame-card">
+    <div class="minigame-head">
+      <div>
+        <span class="minigame-tag">TACTICAL BYPASS INTERFACE</span>
+        <h3 id="minigameTitle">異常配線バイパス回路</h3>
+      </div>
+      <button id="closeMinigame" aria-label="中止">✕</button>
+    </div>
+    <p id="minigameDesc" class="minigame-desc">断線した3本のデータ端子を、対応するポートへ正しい順序で接続してください。手順と所要時間は解析記録に送られます。</p>
+    <div class="minigame-timer-bar"><div id="minigameTimerFill"></div></div>
+    <div class="minigame-board-wrap">
+      <svg id="minigameWireSvg" class="minigame-wire-svg"></svg>
+      <div class="minigame-board" id="minigameBoard"></div>
+    </div>
+    <div class="minigame-status" id="minigameStatus">端子を選択して対応するポートへ接続してください</div>
+  </div>
+</div>
+
+<!-- 行動ログパネル -->
+<div id="logPanel" class="sidepanel hidden">
+  <div class="panel-head">
+    <strong>行動解析ログ</strong>
+    <button data-close="logPanel">×</button>
+  </div>
+  <p class="panel-intro">事前に用意された回答ではなく、都市での実行動からDISC傾向を算出しています。</p>
+  <div id="discResult" class="disc-result-card"></div>
+  <div id="relationshipCard" class="relationship-card"></div>
+  <ul id="logList" class="log-stream"></ul>
+</div>
+
+<!-- 持ち物パネル -->
+<div id="inventoryPanel" class="sidepanel hidden">
+  <div class="panel-head">
+    <strong>携行アイテム</strong>
+    <button data-close="inventoryPanel">×</button>
+  </div>
+  <p class="panel-intro">街の探索やNPCとの対話で得たアイテム。調査時やNPCとの対面時に使用できます。</p>
+  <ul id="inventoryList" class="inventory-stream"><li>まだ何も持っていない</li></ul>
+</div>
+
+<!-- ミッションパネル -->
+<div id="missionPanel" class="sidepanel hidden">
+  <div class="panel-head">
+    <strong>観測ミッション</strong>
+    <button data-close="missionPanel">×</button>
+  </div>
+  <p id="missionStatus" class="mission-status-callout">進行中のミッションはありません。</p>
+  <ul id="missionList" class="mission-stream">
+    <li>街中の異常（漏電盤、狂った信号機、歪んだ看板）を調査せよ。</li>
+    <li>街を漂う観測者に接触し、観測ログを交錯させよ。</li>
+    <li>自販機で菓子パンや夜光飲料を調達せよ。</li>
+  </ul>
+</div>
+
+<!-- 操作方法パネル -->
+<div id="helpPanel" class="sidepanel hidden">
+  <div class="panel-head">
+    <strong>都市観測マニュアル</strong>
+    <button data-close="helpPanel">×</button>
+  </div>
+  <div class="help-section">
+    <h4>PC操作</h4>
+    <p><b>WASD / 矢印キー</b>：移動<br>
+    <b>マウス</b>：視点操作（画面クリックで視点固定）<br>
+    <b>E キー</b>：調べる / 話す / 建物に入る<br>
+    <b>Shift キー</b>：ダッシュ走行<br>
+    <b>Esc キー</b>：視点ロック解除</p>
+  </div>
+  <div class="help-section">
+    <h4>スマートフォン操作</h4>
+    <p><b>左下スティック</b>：移動<br>
+    <b>右側スワイプ</b>：視点操作<br>
+    <b>「調べる」ボタン</b>：アクション</p>
+  </div>
+  <div class="help-section">
+    <h4>都市があなたを記憶する</h4>
+    <p>NPCを放置したか、付き合ったか、芋虫をタップしすぎたかなど、あなたの行動が街の住人間で共有され、セリフや態度がリアルタイムに変化していきます。</p>
+  </div>
+</div>
+
+<div id="mobileControls">
+  <div id="stick"><div id="stickKnob"></div></div>
+  <button id="mobileAction">調べる</button>
+</div>
+
+<!-- 観測終了 事前確認モーダル -->
+<div id="exitConfirmModal" class="cyber-modal hidden">
+  <div class="cyber-modal-card confirm-card">
+    <div class="cyber-modal-head">
+      <div class="head-title-wrap">
+        <span class="cyber-tag">OBSERVATION TERMINATION // 観測終了確認</span>
+        <h3>都市行動観測ノ中断・総括確認</h3>
+      </div>
+      <button id="closeExitConfirm" class="modal-close-btn" aria-label="閉じる">✕</button>
+    </div>
+    <div class="exit-confirm-content">
+      <div class="exit-confirm-quote">
+        <p class="quote-title">『観測を終了しますか？』</p>
+        <p class="quote-desc">この街での行動記録は、ここまで保存されています。</p>
+      </div>
+      <div class="exit-stats-grid">
+        <div class="stat-box">
+          <span class="stat-label">遭遇した住人</span>
+          <strong id="statMetNpcCount" class="stat-val">0 / 3 名</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">発見した記録・所持品</span>
+          <strong id="statDiscoveredCount" class="stat-val">0 件</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">未完了のミッション</span>
+          <strong id="statIncompleteMissionCount" class="stat-val">0 件</strong>
+        </div>
+      </div>
+      <p class="exit-confirm-note">未完了の記録も、そのまま保存されます。</p>
+    </div>
+    <div class="cyber-modal-actions">
+      <button id="btnCancelExit" class="btn-cancel">観測を継続する（都市に戻る）</button>
+      <button id="btnProceedExit" class="btn-proceed-exit">観測を終了して解析結果を見る <span>➔</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- DISC行動解析 結果レポート画面 -->
+<div id="resultsModal" class="results-modal hidden">
+  <div class="results-card">
+    <div class="results-head">
+      <div class="results-badge-wrap">
+        <span class="results-tag">URBAN BEHAVIOR OBSERVATION LAB // CERTIFICATE</span>
+        <h2>行動特性解析証明書（DISC PROFILE）</h2>
+        <div class="results-meta-row">
+          <span id="resMetaInfo" class="results-meta">観測完了 // RECORD VERIFIED</span>
+          <span id="resSelfTypeBadge" class="results-self-badge hidden">自認：<strong id="resSelfTypeDisplay"></strong></span>
+        </div>
+      </div>
+      <button id="closeResults" class="modal-close-btn" aria-label="閉じる">✕</button>
+    </div>
+
+    <div class="results-body">
+      <!-- 総合アーキタイプ判定 -->
+      <div class="archetype-hero-box">
+        <div class="archetype-tag">DOMINANT BEHAVIORAL ARCHETYPE</div>
+        <h3 id="resArchetypeTitle" class="archetype-title">【主導的変革者】Directive Pioneer</h3>
+        <p id="resArchetypeSub" class="archetype-sub">迅速な決断と障害の強行突破を好む、結果志向の行動者</p>
+        <p id="resArchetypeDesc" class="archetype-desc"></p>
+      </div>
+
+      <!-- ダーリンちゃんからの特別講評 -->
+      <div class="results-section darling-comment-section">
+        <h4 class="section-title"><span class="accent-bar"></span> ダーリンちゃんからの特別講評</h4>
+        <div class="darling-comment-card">
+          <div class="darling-avatar-badge">🥺</div>
+          <div class="darling-comment-content">
+            <div class="darling-comment-header">
+              <span class="darling-role-tag">DARLING'S OBSERVATION // 感情観測個体</span>
+              <strong>ダーリンちゃん</strong>
+            </div>
+            <p id="resDarlingCommentText" class="darling-comment-body">「ふふ、ダーリンの行動ログ、全部見てたよ♡」</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISC 4軸メーター -->
+      <div class="results-section">
+        <h4 class="section-title"><span class="accent-bar"></span> DISC行動4象限バランス</h4>
+        <div class="disc-result-meters">
+          <div class="res-meter-row">
+            <div class="res-meter-header">
+              <span class="res-label d">D（Dominance 主導性）</span>
+              <span id="resValD" class="res-val d">0%</span>
+            </div>
+            <div class="res-track"><div id="resBarD" class="res-fill d"></div></div>
+            <small class="res-sub">直接介入・決断の速さ・力づくの突破</small>
+          </div>
+          <div class="res-meter-row">
+            <div class="res-meter-header">
+              <span class="res-label i">I（Influence 感化性）</span>
+              <span id="resValI" class="res-val i">0%</span>
+            </div>
+            <div class="res-track"><div id="resBarI" class="res-fill i"></div></div>
+            <small class="res-sub">対話・共鳴・フィード共有・カオス探求</small>
+          </div>
+          <div class="res-meter-row">
+            <div class="res-meter-header">
+              <span class="res-label s">S（Steadiness 安定性）</span>
+              <span id="resValS" class="res-val s">0%</span>
+            </div>
+            <div class="res-track"><div id="resBarS" class="res-fill s"></div></div>
+            <small class="res-sub">静穏な見守り・雨宿り・傾聴・調和維持</small>
+          </div>
+          <div class="res-meter-row">
+            <div class="res-meter-header">
+              <span class="res-label c">C（Conscientiousness 慎重性）</span>
+              <span id="resValC" class="res-val c">0%</span>
+            </div>
+            <div class="res-track"><div id="resBarC" class="res-fill c"></div></div>
+            <small class="res-sub">論理検証・波形精密測定・規律と規則遵守</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 今回よく選んだ行動 vs 避けた行動 -->
+      <div class="results-section">
+        <h4 class="section-title"><span class="accent-bar"></span> 観測ログから抽出された行動傾向</h4>
+        <div class="behavior-split-grid">
+          <div class="behavior-box preferred">
+            <span class="box-tag">＋ 今回よく選んだ行動</span>
+            <p id="resPreferredActions" class="box-text">直接介入、障害突破、主導的指示</p>
+          </div>
+          <div class="behavior-box avoided">
+            <span class="box-tag">－ 今回避けた行動</span>
+            <p id="resAvoidedActions" class="box-text">長時間の静観、過度な同調</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- NPCとの対話傾向 -->
+      <div class="results-section">
+        <h4 class="section-title"><span class="accent-bar"></span> 深夜都市の住人たちとの観測ログ</h4>
+        <ul id="resNpcTendencies" class="tendency-list"></ul>
+      </div>
+
+      <!-- 発見したもの・ミッション成果 -->
+      <div class="results-section">
+        <h4 class="section-title"><span class="accent-bar"></span> 今回の探索で発見・達成したもの</h4>
+        <ul id="resDiscoveryList" class="discovery-list"></ul>
+      </div>
+
+      <!-- 過去の探索結果からの推移・変化 -->
+      <div class="results-section">
+        <h4 class="section-title"><span class="accent-bar"></span> 過去の探索記録との比較推移</h4>
+        <div id="resHistoryDiff" class="history-diff-box"></div>
+      </div>
+    </div>
+
+    <!-- アクションボタン群 -->
+    <div class="results-actions-bar">
+      <button id="btnShareResult" class="res-btn share"><span class="btn-icon">🔗</span> ナビゲーション共有</button>
+      <button id="btnExportImage" class="res-btn export"><span class="btn-icon">🖼️</span> 解析結果カードを画像保存 (PNG)</button>
+      <button id="btnRestartExploration" class="res-btn restart"><span class="btn-icon">↺</span> タイトルに戻る</button>
+      <button id="btnBackToCity" class="res-btn back"><span class="btn-icon">➔</span> 街の探索に戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ネオン・フィード SNSモーダル -->
+<div id="feedModal" class="feed-modal hidden">
+  <div class="feed-phone-card">
+    <div class="feed-phone-notch"></div>
+    <div class="feed-phone-head">
+      <div class="feed-head-title">
+        <span class="feed-badge">NEON-FEED // 第零区実況網</span>
+        <h3>ネオン・フィード</h3>
+      </div>
+      <button id="closeFeedModal" class="modal-close-btn" aria-label="閉じる">✕</button>
+    </div>
+
+    <!-- 投稿作成バー -->
+    <div class="feed-compose-box">
+      <div class="feed-compose-row">
+        <span class="feed-avatar me">🕶️</span>
+        <textarea id="feedPostInput" placeholder="この地点の状況を実況する（#深夜の第零区 #雨宿り など）..." rows="2"></textarea>
+      </div>
+      <div class="feed-compose-actions">
+        <div class="feed-quick-tags">
+          <button type="button" class="quick-tag" data-tag="#第零区異常調査">#異常調査</button>
+          <button type="button" class="quick-tag" data-tag="#雨宿りなう">#雨宿り</button>
+          <button type="button" class="quick-tag" data-tag="#カオス交差点">#カオス</button>
+        </div>
+        <button id="btnSendFeedPost" class="btn-feed-post">実況を投稿 <span>⚡</span></button>
+      </div>
+    </div>
+
+    <!-- タイムライン・ストリーム -->
+    <div class="feed-timeline-wrap" id="feedTimeline">
+      <!-- Posts dynamically populated -->
+    </div>
+  </div>
+</div>
+
+<!-- 画像保存プレビューモーダル（スマホ長押し保存対応・スクロール可能） -->
+<div id="imageSaveModal" class="image-save-modal hidden">
+  <div class="image-save-card">
+    <div class="image-save-head">
+      <div>
+        <span class="cyber-tag" id="imageSaveTag">IMAGE EXPORT // CERTIFICATE CARD</span>
+        <h3 id="imageSaveTitle">解析結果カードの保存</h3>
+      </div>
+      <button id="btnCloseImageSave" class="modal-close-btn" aria-label="閉じる">✕</button>
+    </div>
+    <div class="image-save-notice">
+      <p class="mobile-hint">📱 <strong>スマートフォンの方：</strong>下の画像を<strong>長押し</strong>して「写真に追加」または「画像を保存」してください。</p>
+      <p class="pc-hint">💻 <strong>PCの方：</strong>右下の「PNG画像をダウンロード」ボタンまたは右クリック保存をご利用いただけます。</p>
+    </div>
+    <div class="image-preview-scroll-wrap">
+      <img id="previewImageCard" alt="DISC行動解析結果カード" class="preview-img">
+    </div>
+    <div class="image-save-actions">
+      <a id="btnDownloadCardDirect" class="btn-download" download="MIDNIGHT_PROTOCOL_DISC.png">PNG画像をダウンロード</a>
+      <button id="btnCloseImageSaveBottom" class="btn-cancel" onclick="document.getElementById('imageSaveModal').classList.add('hidden')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="startScreen" class="start-screen">
+  <div class="start-card">
+    <!-- サイトパンくずリスト -->
+    <nav class="start-breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://mofu-mitsu.github.io/" target="_blank" rel="noopener">ホーム</a>
+      <span class="bc-sep">＞</span>
+      <a href="https://mofu-mitsu.github.io/lab.html" target="_blank" rel="noopener">Niラボ</a>
+      <span class="bc-sep">＞</span>
+      <span class="bc-current">深夜都市行動解析計画</span>
+    </nav>
+
+    <div class="start-insignia">
+      <svg class="start-hero-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="40,4 74,22 74,58 40,76 6,58 6,22" stroke="url(#heroGlow)" stroke-width="2.5" fill="rgba(6,14,30,0.85)"/>
+        <polygon points="40,12 66,27 66,53 40,68 14,53 14,27" stroke="rgba(114,246,255,0.35)" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <circle cx="40" cy="40" r="16" stroke="#72f6ff" stroke-width="1.8"/>
+        <circle cx="40" cy="40" r="7" fill="url(#heroCenter)"/>
+        <line x1="10" y1="40" x2="24" y2="40" stroke="#ff75c8" stroke-width="2"/>
+        <line x1="56" y1="40" x2="70" y2="40" stroke="#ff75c8" stroke-width="2"/>
+        <line x1="40" y1="10" x2="40" y2="24" stroke="#72f6ff" stroke-width="2"/>
+        <line x1="40" y1="56" x2="40" y2="70" stroke="#72f6ff" stroke-width="2"/>
+        <defs>
+          <linearGradient id="heroGlow" x1="6" y1="4" x2="74" y2="76" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#72f6ff"/>
+            <stop offset="0.45" stop-color="#bf55ec"/>
+            <stop offset="1" stop-color="#ff75c8"/>
+          </linearGradient>
+          <radialGradient id="heroCenter" cx="40" cy="40" r="7" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ff75c8"/>
+            <stop offset="1" stop-color="#bf55ec"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="eyebrow">URBAN BEHAVIOR OBSERVATION SYSTEM // BUILD 0.6</div>
+    <h1 class="start-title-glitch">
+      <span class="jp-title">深夜都市行動解析計画</span>
+      <span class="en-title">MIDNIGHT PROTOCOL</span>
+    </h1>
+
+    <!-- DISC診断の説明 -->
+    <div class="disc-explainer-box">
+      <div class="disc-explainer-tag">BEHAVIORAL MODEL // リアルタイム行動DISC診断</div>
+      <p class="disc-explainer-text">
+        本作は、選択肢を選ぶだけの心理テストではありません。<strong>深夜都市でのリアルタイムな実行動（歩行、ダッシュ、異常調査、介入、静観、対話）</strong>から、あなたの行動特性を<strong>DISCモデル（D:主導性 / I:感化性 / S:安定性 / C:慎重性）</strong>に基づき客観的に解析・観測します。
+      </p>
+    </div>
+
+    <!-- 自認入力欄（自由形式） -->
+    <div class="self-type-wrap">
+      <label for="selfTypeInput" class="self-type-label">
+        <span class="label-main">事前の性格自認プロファイル（任意・自由形式）</span>
+        <span class="label-sub">例: INTJ, 5w6, LII など</span>
+      </label>
+      <input type="text" id="selfTypeInput" class="self-type-input" placeholder="例: INTJ, 5w6, LII（未入力でも観測可能）" maxlength="60" autocomplete="off">
+      <p class="self-type-hint">※あらかじめ入力しておくと、観測終了後の解析証明書で行動結果（DISC）との照合・考察が表示されます。</p>
+    </div>
+
+    <p class="start-desc">都市ハ眠ラナイ。アナタノ選択肢デハナク、「リアルタイムノ実行動」ガスベテ観測サレル。<br>
+    目的地ハ指定サレテイナイ。歩ク、走ル、立チ止マル、接触スル……スベテガ都市ノ管理ログニ記録サレル。<br>
+    雨トネオンニ沈ム第零区ヲ、自由ニ探索セヨ。</p>
+    <button id="startButton">都市ニ接続スル <span>→</span></button>
+    <small>推奨環境：PC (WASD+マウス) または スマートフォン / サウンド対応ブラウザ</small>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/","three-vrm":"https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.2.0/lib/three-vrm.module.js"}}</script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
