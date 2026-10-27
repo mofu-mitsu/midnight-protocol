@@ -1,0 +1,109 @@
+/**
+ * ====================================================================
+ * 深夜都市行動解析計画 (MIDNIGHT PROTOCOL)
+ * Google スプレッドシート連携用 Google Apps Script (GAS) スクリプト
+ * ====================================================================
+ * 
+ * 【設定手順】
+ * 1. Google スプレッドシートを新規作成し、適当な名前（例: 深夜都市観測データ）を付けます。
+ * 2. ツールバーの「拡張機能」>「Apps Script」をクリックします。
+ * 3. エディタに最初から書かれているコードを全て消去し、このファイルの内容をそのまま貼り付けます。
+ * 4. 右上の「デプロイ」ボタン >「新しいデプロイ」をクリックします。
+ * 5. 種類の選択（歯車アイコン）で「ウェブアプリ」を選択します。
+ * 6. 次の項目を設定します：
+ *    - 説明: 観測データ受信API
+ *    - 次のユーザーとして実行: 自分（あなたのGoogleアカウント）
+ *    - アクセスできるユーザー: 「全員」（※ログイン不要でPOST可能にするため重要）
+ * 7. 「デプロイ」をクリックし、Googleの承認を許可します。
+ * 8. 発行された「ウェブアプリのURL」（https://script.google.com/macros/s/.../exec）をコピーします。
+ * 
+ * 【アプリへのURL設定方法】
+ * ブラウザのコンソール（F12）で以下を実行、または localStorage に保存するだけで自動送信されます：
+ * localStorage.setItem('gas_webapp_url', 'コピーしたウェブアプリURL');
+ * 
+ * 観測終了時に自動的にGoogleスプレッドシートへ行が追加されます。
+ */
+
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // シートが空の場合、ヘッダー行を自動作成
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "タイムスタンプ",
+        "自認タイプ",
+        "判定アーキタイプ",
+        "Dスコア(%)",
+        "Iスコア(%)",
+        "Sスコア(%)",
+        "Cスコア(%)",
+        "行動総数",
+        "歩行距離(m)",
+        "ダッシュ距離(m)",
+        "解決した異常",
+        "達成おつかい数",
+        "NPC親密度ステータス",
+        "所持品一覧",
+        "行動ログ要約"
+      ]);
+      // ヘッダーのスタイル適用
+      sheet.getRange(1, 1, 1, 15).setBackground("#1a1a2e").setFontColor("#72f6ff").setFontWeight("bold");
+    }
+
+    var data = {};
+    if (e && e.postData && e.postData.contents) {
+      data = JSON.parse(e.postData.contents);
+    } else if (e && e.parameter) {
+      data = e.parameter;
+    }
+
+    var timestamp = data.timestamp || new Date().toLocaleString("ja-JP");
+    var selfType = data.selfType || "未設定";
+    var archetype = data.archetype || "未確定";
+    var d = data.scores ? data.scores.D : (data.D || 0);
+    var i = data.scores ? data.scores.I : (data.I || 0);
+    var s = data.scores ? data.scores.S : (data.S || 0);
+    var c = data.scores ? data.scores.C : (data.C || 0);
+    var totalActions = data.totalActions || data.actions || 0;
+    var walkDist = Math.round(data.walkDistance || 0);
+    var runDist = Math.round(data.runDistance || 0);
+    var anomalies = data.anomaliesFixed || 0;
+    var errands = data.errandsCompleted || 0;
+    var npcStatus = data.npcStatus || "";
+    var inventory = Array.isArray(data.inventory) ? data.inventory.join(", ") : (data.inventory || "");
+    var logSummary = data.logSummary || "";
+
+    sheet.appendRow([
+      timestamp,
+      selfType,
+      archetype,
+      d,
+      i,
+      s,
+      c,
+      totalActions,
+      walkDist,
+      runDist,
+      anomalies,
+      errands,
+      npcStatus,
+      inventory,
+      logSummary
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Data logged" }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "online",
+    message: "MIDNIGHT PROTOCOL GAS Endpoint is ready for POST requests."
+  })).setMimeType(ContentService.MimeType.JSON);
+}

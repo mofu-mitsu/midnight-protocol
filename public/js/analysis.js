@@ -33,12 +33,23 @@ export function record(type, detail, weight = {}) {
   if (analysis.logs.length > 100) analysis.logs.pop();
   analysis.actions++;
 
-  const keys = Object.keys(weight).filter(k => ['D', 'I', 'S', 'C'].includes(k));
+  let adjustedWeights = { ...weight };
+  // S過剰上昇の補正：能動的なI（発信・ノリ・交流）や主導的Dを選択した際はSの偏りを相殺
+  if ((adjustedWeights.I >= 2 || adjustedWeights.D >= 2) && !adjustedWeights.S) {
+    adjustedWeights.S = -0.5;
+  }
+
+  const keys = Object.keys(adjustedWeights).filter(k => ['D', 'I', 'S', 'C'].includes(k));
   for (const k of keys) {
-    const highest = Math.max(analysis.D, analysis.I, analysis.S, analysis.C, 1);
-    const relative = analysis[k] / highest;
-    const correction = relative > 0.9 ? 0.6 : relative > 0.75 ? 0.8 : 1.0;
-    analysis[k] += weight[k] * correction;
+    const val = adjustedWeights[k];
+    if (val > 0) {
+      const highest = Math.max(analysis.D, analysis.I, analysis.S, analysis.C, 1);
+      const relative = analysis[k] / highest;
+      const correction = relative > 0.9 ? 0.65 : relative > 0.75 ? 0.85 : 1.0;
+      analysis[k] += val * correction;
+    } else {
+      analysis[k] = Math.max(0, analysis[k] + val);
+    }
   }
 
   window.dispatchEvent(new CustomEvent("observation", { detail: { type, detail } }));

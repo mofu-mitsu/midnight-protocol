@@ -27,6 +27,16 @@ export function setupUI(interactions) {
 
   setupNeonFeed(interactions);
 
+  const hudToggleBtn = document.getElementById('hudToggleButton');
+  hudToggleBtn?.addEventListener('click', () => {
+    document.body.classList.toggle('hud-hidden');
+    const isHidden = document.body.classList.contains('hud-hidden');
+    const txt = hudToggleBtn.querySelector('.toggle-text');
+    if (txt) txt.textContent = isHidden ? '展開' : 'HUD';
+    const icon = hudToggleBtn.querySelector('.toggle-icon');
+    if (icon) icon.textContent = isHidden ? '✕' : '👁️';
+  });
+
   function togglePanel(id) {
     const el = document.getElementById(id);
     const wasHidden = el.classList.contains('hidden');

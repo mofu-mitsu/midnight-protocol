@@ -1116,8 +1116,13 @@ export function updateAnomalies(time) {
           item.light.intensity = 1.0 + (Math.sin(time * 18) > 0.4 ? 2.5 : 0.2);
         }
       } else if (item.kind === 'anomaly_signal') {
-        const flicker = Math.sin(time * 8);
-        item.light.color.set(flicker > 0 ? 0xff2255 : 0x22ff99);
+        if (item.fixed) {
+          item.light.color.set(0x22ff99);
+          item.light.intensity = 1.2;
+        } else {
+          const flicker = Math.sin(time * 8);
+          item.light.color.set(flicker > 0 ? 0xff2255 : 0x22ff99);
+        }
       } else if (item.kind === 'anomaly_hologram') {
         item.light.intensity = 1.4 + Math.sin(time * 12) * 0.8;
       }

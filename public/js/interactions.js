@@ -81,6 +81,7 @@ export function setupInteractions(camera) {
       dialogueOpts = [
         ['「結論を急ぎたまえ。街のデバッグを最優先で進めるぞ」', { D: 2 }],
         ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
+        ['「もういいwww」（芋虫が反省ログを書く）', { I: 2, S: 1 }],
         ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
         ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
       ];
@@ -155,15 +156,38 @@ export function setupInteractions(camera) {
       ]);
     }
 
-    // 4. Special Actions (特殊行動)
+    // 4. Special Actions (特殊行動 / おつかい・物々交換)
     const specialOpts = [];
     if (item.kind === 'darling') {
+      if (!cityMemory.darlingQuestCompleted) {
+        if (inventory.includes('桃色ミルク')) {
+          specialOpts.push(['🎁【おつかい完了】ダーリンちゃんに頼まれていた「桃色ミルク」を届ける♡', { I: 3, S: 2 }]);
+        } else {
+          specialOpts.push(['🥺「ダーリン♡ 自販機で桃色ミルク買ってきてぇ♡」とおねだりを聞く', { I: 2, S: 1 }]);
+        }
+      }
       specialOpts.push(['『ダーリンちゃんと深夜の街角で密会なう♡』とネオン・フィードに自慢する', { I: 2 }]);
       specialOpts.push(['「この街の構造とあなたの存在理由を教えて」と深く問い詰める', { C: 2 }]);
     } else if (item.kind === 'caterpillar') {
+      if (!cityMemory.caterpillarQuestCompleted) {
+        if (inventory.includes('夜光ソーダ') || inventory.includes('廃棄された電子基板')) {
+          const part = inventory.includes('夜光ソーダ') ? '夜光ソーダ' : '廃棄された電子基板';
+          specialOpts.push([`🎁【物々交換】LSI芋虫に回路補正物資「${part}」を譲渡する`, { C: 3, D: 1 }]);
+        } else {
+          specialOpts.push(['「都市クロック補正に『夜光ソーダ』か『廃棄電子基板』を求む！🐛」と依頼を受ける', { C: 2 }]);
+        }
+      }
       specialOpts.push(['芋虫をタップする（SLE物理介入テスト）', { D: 2 }]);
       specialOpts.push(['『巨大な光る緑の芋虫と遭遇！デバッグ中らしい🐛』とネオン・フィードに共有する', { I: 2 }]);
     } else if (item.kind === 'observer') {
+      if (!cityMemory.natsueQuestCompleted) {
+        if (inventory.includes('夜のチョココロネ') || inventory.includes('星屑ウォーター')) {
+          const treat = inventory.includes('夜のチョココロネ') ? '夜のチョココロネ' : '星屑ウォーター';
+          specialOpts.push([`🎁【差し入れ】寒そうにしている観測者さんに「${treat}」を渡す`, { S: 3, I: 2 }]);
+        } else {
+          specialOpts.push(['「雨で冷えるから、温かい菓子パンかお水が欲しいな」と控えめなお願いを聞く', { S: 2, I: 1 }]);
+        }
+      }
       specialOpts.push(
         observerFollow
           ? ['バイバイする（同行を解除）', { S: 1 }]
@@ -180,7 +204,7 @@ export function setupInteractions(camera) {
         specialOpts.push(['「ねぇダーリンちゃん、一緒に雨宿りしよ？」とベンチに誘う', { I: 2, S: 1 }]);
       }
       if (observerNear) {
-        specialOpts.push([cityMemory.natsueNameRevealed ? '「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う' : '「観測者さん、少し雨宿りしていかない？」とベンチに誘う', { S: 2, I: 1 }]);
+        specialOpts.push([cityMemory.natsueNameRevealed ? '「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う' : '「観測者さん、少し雨宿りしていかない？」とベンチに誘う', { S: 1, I: 1 }]);
       }
       if (caterpillarNear) {
         specialOpts.push(['「LSI芋虫、雨宿りしながら構造の話を聞かせて」と誘う', { C: 2, S: 1 }]);
@@ -405,9 +429,11 @@ export function setupInteractions(camera) {
     }
 
     if (item.kind === 'caterpillar') {
+      if (label.includes('もういい') || label.includes('反省ログ')) return 'LSI芋虫「『もういいwww』……！？ なぜ笑うんだ！ 🐛【ログ記録中……】『観測者からの草の多発により論理整合性が一時的に破綻。次回はより適切な境界線を設定すること……反省。』……ほら、反省ログを保存したよ！🐛💦';
       const opts = [
         ['芋虫をタップする（SLE物理介入テスト）', { D: 2 }],
         ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
+        ['「もういいwww」（芋虫が反省ログを書く）', { I: 2, S: 1 }],
         ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
         ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
       ];
@@ -630,7 +656,7 @@ export function setupInteractions(camera) {
       return;
     }
 
-    if (item.name === '忘失物ボックス' && (label.includes('確保') || label.includes('調査') || label.includes('学生証'))) {
+    if (item.name === '忘失物ボックス') {
       cityMemory.natsueReceiptFound = true;
       if (!inventory.includes('古い学生証（名前：夏江）')) {
         inventory.push('古い学生証（名前：夏江）');
@@ -638,7 +664,11 @@ export function setupInteractions(camera) {
       }
       unlockMission('M_NATSUE', '【緊急ミッション発生！】忘失物ノ調査：学生証ニ記サレタ「夏江」トイウ人物ノ行方ヲ追跡セヨ。');
       record('アイテム入手', '忘失物ボックスから「夏江」の古い学生証を発見・確保', weights);
-      showDialogResult(item, label, '古い学生証（名前：夏江）を入手した。\n都内の高校の学生証で、雨に濡れた写真の少女が微かに微笑んでいる。\n【緊急ミッション発生！】住人への聞き込みが可能になりました。', weights);
+      let replyText = `古い学生証（名前：夏江）を入手した。\n都内の高校の学生証で、雨に濡れた写真の少女が微かに微笑んでいる。\n【緊急ミッション発生！】住人への聞き込みが可能になりました。`;
+      if (label.includes('祈り') || label.includes('聞き込み') || label.includes('持ち主')) {
+        replyText = `忘失物ボックスから、濡れたまま取り残されていた「古い学生証（名前：夏江）」を丁寧に預かった。\n持ち主の少女の無事を祈り、周囲の住人に心当たりを聞き込み調査する決意を固める。\n【緊急ミッション発生！】街の住人に持ち主の心当たりを聞き込みできるようになりました。`;
+      }
+      showDialogResult(item, label, replyText, weights);
       return;
     }
 
@@ -917,7 +947,7 @@ export function setupInteractions(camera) {
       }
     }
 
-    if (item.kind === 'building_entrance' && (label.includes('入る') || label.includes('突入'))) {
+    if (item.kind === 'building_entrance' && (label.includes('入る') || label.includes('突入') || label.includes('入館') || label.includes('開けて'))) {
       insideArchive = true;
       camera.position.set(35.0, 1.65, -21.8);
       window.dispatchEvent(new CustomEvent('location-mode', { detail: { inside: true } }));
@@ -947,6 +977,101 @@ export function setupInteractions(camera) {
         ? '観測者「うん、少し後ろを歩くね。街を一緒に観測しよう。」'
         : '観測者「ここまで歩けてよかった。またいつでも声をかけてね。」';
       showDialogResult(item, label, line, { S: 2 });
+      return;
+    }
+
+    // 暴走信号機の修復
+    if (item.kind === 'anomaly_signal' && (label.includes('リセット') || label.includes('論理エラー') || label.includes('特定') || label.includes('強制'))) {
+      if (!item.fixed) {
+        item.fixed = true;
+        item.name = '正常復旧した信号機';
+        item.type = '都市インフラ（正常）';
+        item.description = '強制リセットと論理補正により正常稼働中の信号機。青緑の光が雨の路面を静かに照らしている。';
+        if (item.light) {
+          item.light.color.set(0x22ff99);
+          item.light.intensity = 1.2;
+        }
+        anomaliesCleared++;
+        updateMemory('anomaliesFixed', 1);
+        toast('信号機ガ正常復旧！点滅エラーガ解消サレマシタ。');
+        completeMission('M_ANOMALY', '【ミッション達成！】『都市インフラの異常調査・復旧』が完了しました！');
+        checkMissionProgress();
+      }
+    }
+
+    // ダーリンちゃんのおつかい
+    if (label.includes('桃色ミルク買ってきて')) {
+      cityMemory.darlingQuestActive = true;
+      const line = 'ダーリンちゃん「やったぁ♡ 🥺 自販機で『桃色ミルク』買ってきて！ 冷たくて甘いやつね♡ 待ってるから早く戻ってきてよ、ダーリン♡」';
+      record('おつかい受諾', 'ダーリンちゃんから桃色ミルクのおねだりを受託', weights);
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+    if (label.includes('桃色ミルク') && label.includes('届ける')) {
+      const idx = inventory.indexOf('桃色ミルク');
+      if (idx >= 0) inventory.splice(idx, 1);
+      if (!inventory.includes('暗号化メモリチップ')) inventory.push('暗号化メモリチップ');
+      window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      cityMemory.darlingAffection += 5;
+      cityMemory.darlingQuestCompleted = true;
+      cityMemory.errandsCompleted = (cityMemory.errandsCompleted || 0) + 1;
+      updateMemory('errandsCompleted', 1);
+      record('おつかい達成', 'ダーリンちゃんに桃色ミルクをプレゼントしてお礼に暗号化メモリチップを入手', { I: 3, S: 2 });
+      toast('【親密度大幅UP！】ダーリンちゃんから「暗号化メモリチップ」を受け取った！');
+      const line = 'ダーリンちゃん「わっ、ホンマに買ってきてくれたん！？♡ ダーリンめっちゃ優しいやん……！🥺♡ （ごくごく）ん〜甘くて生き返るわぁ！ お礼にウチが裏路地で見つけた秘密の『暗号化メモリチップ』あげるね♡ ダーリンのこと、もっと好きになっちゃったかも♡」';
+      showDialogResult(item, label, line, { I: 3, S: 2 });
+      return;
+    }
+
+    // 観測者のお願い
+    if (label.includes('温かい菓子パンかお水が欲しいな') || label.includes('控えめなお願いを聞く')) {
+      cityMemory.natsueQuestActive = true;
+      const obsName = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
+      const line = `${obsName}「ありがとう……。雨が続くと、なんだか昔食べた甘いチョココロネや、綺麗な星屑ウォーターの味が恋しくなるの。もし自販機で見かけたら、分けてくれたら嬉しいな。」`;
+      record('おつかい受諾', '観測者から温かい補給のお願いを受託', weights);
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+    if (label.includes('差し入れ') && label.includes('渡す')) {
+      const treat = inventory.includes('夜のチョココロネ') ? '夜のチョココロネ' : '星屑ウォーター';
+      const idx = inventory.indexOf(treat);
+      if (idx >= 0) inventory.splice(idx, 1);
+      if (!inventory.includes('星空のプリズムレンズ')) inventory.push('星空のプリズムレンズ');
+      window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      cityMemory.natsueAffection += 5;
+      cityMemory.natsueQuestCompleted = true;
+      cityMemory.errandsCompleted = (cityMemory.errandsCompleted || 0) + 1;
+      updateMemory('errandsCompleted', 1);
+      record('おつかい達成', `観測者に${treat}を差し入れしてお礼に星空のプリズムレンズを入手`, { S: 3, I: 2 });
+      toast('【親愛度大幅UP！】観測者から「星空のプリズムレンズ」を受け取った！');
+      const obsName = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
+      const line = `${obsName}「……！ 本当に持ってきてくれたの……？ ありがとう、すごく温かい。お礼に、私が大事に持っていた『星空のプリズムレンズ』を受け取ってほしいな。この街のネオンが、少しだけ星空に見えるレンズなの。」`;
+      showDialogResult(item, label, line, { S: 3, I: 2 });
+      return;
+    }
+
+    // LSI芋虫の物々交換
+    if (label.includes('クロック補正に') || label.includes('依頼を受ける')) {
+      cityMemory.caterpillarQuestActive = true;
+      const line = 'LSI芋虫「受託感謝！🐛 自販機の『夜光ソーダ』の炭酸イオン、またはゴミ箱の『廃棄された電子基板』のICチップがあれば、都市照明のクロック同期が完了するんだ。よろしく頼むよ！🐛」';
+      record('物々交換受託', 'LSI芋虫から回路補正物資の調達を受諾', weights);
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+    if (label.includes('物々交換') && label.includes('譲渡する')) {
+      const part = inventory.includes('夜光ソーダ') ? '夜光ソーダ' : '廃棄された電子基板';
+      const idx = inventory.indexOf(part);
+      if (idx >= 0) inventory.splice(idx, 1);
+      if (!inventory.includes('論理回路バッジ')) inventory.push('論理回路バッジ');
+      window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      cityMemory.caterpillarConsultCount += 3;
+      cityMemory.caterpillarQuestCompleted = true;
+      cityMemory.errandsCompleted = (cityMemory.errandsCompleted || 0) + 1;
+      updateMemory('errandsCompleted', 1);
+      record('物々交換達成', `LSI芋虫に${part}を提供してお礼に論理回路バッジを入手`, { C: 3, D: 1 });
+      toast('【信頼度大幅UP！】LSI芋虫から「論理回路バッジ」を受け取った！');
+      const line = 'LSI芋虫「素晴らしい調達効率だね！ 論理的課題が即座に解決したよ。約束通り僕の特製『論理回路バッジ』を譲渡するよ！ 君との論理互換性は最高水準だと認定するよ！🐛✨」';
+      showDialogResult(item, label, line, { C: 3, D: 1 });
       return;
     }
 
@@ -1268,7 +1393,7 @@ export function setupInteractions(camera) {
       promptEl.textContent = '「ダーリン♡ もう歩くの飽きた。五分だけ、ここにおって？ 雨の音、一緒に聞こ？」';
       const choices = [
         {
-          label: '「いいよ、一緒に座って雨を見よう（静かに付き合う）」',
+          label: '「いいよ、一緒に座って雨を見よう」',
           action: () => {
             updateMemory('darlingSpentTimeCount', 1);
             record('付き添い行動', 'ダーリンちゃんの暇つぶしに静かに付き合った', { S: 3 });
@@ -1276,14 +1401,14 @@ export function setupInteractions(camera) {
           }
         },
         {
-          label: '「どうして歩くのに飽きたの？（心理と理由を問う）」',
+          label: '「どうして歩くのに飽きたの？」',
           action: () => {
             record('理由分析', '歩くのに飽きた心理的・論理的背景を質問', { C: 2, I: 1 });
             return 'ダーリンちゃん「理由？ ……世界の構造が単純すぎて、次の展開が全部計算できちゃうから。退屈の病なんよ、ダーリン♡」';
           }
         },
         {
-          label: '「先を急ぐからまた今度（振り切って前進する）」',
+          label: '「先を急ぐからまた今度」',
           action: () => {
             updateMemory('darlingIgnoredCount', 1);
             record('主導的進行', 'ダーリンちゃんの引き止めを振り切って前進', { D: 3 });
@@ -1313,7 +1438,7 @@ export function setupInteractions(camera) {
       promptEl.textContent = '「ねぇダーリン♡ この退屈な街の街灯、一瞬ショートさせて真っ暗にしてみない？♡」';
       const choices = [
         {
-          label: '「面白そう、やってみよう（スイッチを押す）」',
+          label: '「面白そう、やってみよう」',
           action: () => {
             record('都市実験', 'ダーリンちゃんの提案に乗って街灯を一斉消灯', { D: 2, I: 2 });
             scene.traverse(o => {
@@ -1329,7 +1454,7 @@ export function setupInteractions(camera) {
           }
         },
         {
-          label: '「街の管理システムに怒られるよ（慎重に制止する）」',
+          label: '「街の管理システムに怒られるよ」',
           action: () => {
             record('慎重な制約', '街灯消灯の提案を制止した', { C: 2, S: 1 });
             return 'ダーリンちゃん「ちぇっ、真面目さん♡ でも、その慎重さもダーリンの可愛いところやね♡」';
@@ -1371,10 +1496,10 @@ export function setupInteractions(camera) {
       promptEl.textContent = lines[Math.floor(Math.random() * lines.length)];
 
       const shortcuts = [
-        { text: '「放っておいてほしい（境界線）」', weights: { D: 2 } },
-        { text: '「感情なんて漏れてないよ（論理）」', weights: { C: 2 } },
-        { text: '「退屈ならずっと付き合うよ（共鳴）」', weights: { I: 2, S: 1 } },
-        { text: '「静かに隣にいてあげる（受容）」', weights: { S: 3 } }
+        { text: '「放っておいてほしい」', weights: { D: 2 } },
+        { text: '「感情なんて漏れてないよ」', weights: { C: 2 } },
+        { text: '「退屈ならずっと付き合うよ」', weights: { I: 2 } },
+        { text: '「静かに隣にいてあげる」', weights: { S: 2 } }
       ];
       shortcuts.forEach(s => {
         const b = document.createElement('button');
@@ -1495,22 +1620,22 @@ export function setupInteractions(camera) {
       promptEl.textContent = '「悩み相談を受け付けるよ。🐛 人が寂しさを感じる時って、期待された接触頻度が下回るからで——どう返す？」';
       const picks = [
         {
-          text: '「そう、それ！（構造的受容）」',
+          text: '「そう、それ！」',
           weights: { C: 2, S: 1 },
           reply: 'LSI芋虫「理解が早くて助かるよ！🐛 要するに接触変数の増分をスケジュール化すれば解決するね！」'
         },
         {
-          text: '「共感してほしいんだよ（感情の共鳴）」',
+          text: '「共感してほしいんだよ」',
           weights: { I: 2, S: 1 },
           reply: 'LSI芋虫「共感か……他者の感情状態の内部シミュレーションを実行してみるね。……うん、共感プロセス、完了したよ！🐛」'
         },
         {
-          text: '「うだうだ言ってないで外に出て行動しよう！（行動主導）」',
+          text: '「うだうだ言ってないで外に出て行動しよう！」',
           weights: { D: 3 },
           reply: 'LSI芋虫「わわっ、強烈な行動主義だね！🐛 でも意思決定と物理移動は確かに気分転換の即効性があるよ！」'
         },
         {
-          text: '「静かに雨の音を聞いて落ち着こう（安定）」',
+          text: '「静かに雨の音を聞いて落ち着こう」',
           weights: { S: 3 },
           reply: 'LSI芋虫「雨の音のホワイトノイズは情動のゆらぎを鎮静化させるね。穏やかな処方箋だ。🐛」'
         }
@@ -1529,10 +1654,10 @@ export function setupInteractions(camera) {
       inputWrap?.classList.add('hidden');
       promptEl.textContent = '「境界線の定義について議論しよう。君はどこからを侵入と定義する？🐛」';
       const choices = [
-        { text: '「立入禁止区域に入った時（規則遵守）」', reply: 'LSI芋虫「最も法制化された健全な定義だね。秩序の基本だよ。🐛」', weights: { C: 3 } },
-        { text: '「相手の許可なく近づいた時（配慮と安定）」', reply: 'LSI芋虫「パーソナルスペースの幾何学だね。配慮が感じられるよ。🐛」', weights: { S: 3 } },
-        { text: '「相手が嫌がった時（感情の共鳴）」', reply: 'LSI芋虫「感情境界の観測だね。主観のゆらぎを含む高度な定義だ。🐛」', weights: { I: 2, S: 1 } },
-        { text: '「自分の力でテリトリーを主張した時（主導性）」', reply: 'LSI芋虫「ぐぬぬ……！ SLE特有の力学的境界拡張論だね！ 境界線は守りたまえ！🐛💢」', weights: { D: 3 } }
+        { text: '「立入禁止区域に入った時」', reply: 'LSI芋虫「最も法制化された健全な定義だね。秩序の基本だよ。🐛」', weights: { C: 3 } },
+        { text: '「相手の許可なく近づいた時」', reply: 'LSI芋虫「パーソナルスペースの幾何学だね。配慮が感じられるよ。🐛」', weights: { S: 3 } },
+        { text: '「相手が嫌がった時」', reply: 'LSI芋虫「感情境界の観測だね。主観のゆらぎを含む高度な定義だ。🐛」', weights: { I: 2, S: 1 } },
+        { text: '「自分の力でテリトリーを主張した時」', reply: 'LSI芋虫「ぐぬぬ……！ SLE特有の力学的境界拡張論だね！ 境界線は守りたまえ！🐛💢」', weights: { D: 3 } }
       ];
       choices.forEach(c => {
         const b = document.createElement('button');
@@ -1548,10 +1673,10 @@ export function setupInteractions(camera) {
       inputWrap?.classList.add('hidden');
       promptEl.textContent = '「君は街中で僕をよく観察しているね。🐛 これはSLE（感覚主導）の力学的フィードバックテストなのかな？」';
       const choices = [
-        { text: '「そうだ、力関係をテストしている（主導的）」', reply: 'LSI芋虫「やっぱりSLEかーーっ！！ 物理的介入による優位性の確立はお断りだよ！🐛」', weights: { D: 3 } },
-        { text: '「可愛いからリアクションが見たくて（好意と交流）」', reply: 'LSI芋虫「か、可愛い……！？🐛 僕は合理的な会議体であって、マスコットではないんだからね……！」', weights: { I: 3 } },
-        { text: '「街の害にならないか安全を確認していた（慎重）」', reply: 'LSI芋虫「なるほど、生態系リスクのスクリーニングだね。僕は安全無害なデバッグ個体だよ。🐛」', weights: { S: 2, C: 1 } },
-        { text: '「タップ時の物理演算コリジョンを検証中だ（論理）」', reply: 'LSI芋虫「物理エンジンの検証か！🐛 衝突判定のメッシュ精度なら自信があるよ！」', weights: { C: 3 } }
+        { text: '「そうだ、力関係をテストしている」', reply: 'LSI芋虫「やっぱりSLEかーーっ！！ 物理的介入による優位性の確立はお断りだよ！🐛」', weights: { D: 3 } },
+        { text: '「可愛いからリアクションが見たくて」', reply: 'LSI芋虫「か、可愛い……！？🐛 僕は合理的な会議体であって、マスコットではないんだからね……！」', weights: { I: 3 } },
+        { text: '「街の害にならないか安全を確認していた」', reply: 'LSI芋虫「なるほど、生態系リスクのスクリーニングだね。僕は安全無害なデバッグ個体だよ。🐛」', weights: { S: 2, C: 1 } },
+        { text: '「タップ時の物理演算コリジョンを検証中だ」', reply: 'LSI芋虫「物理エンジンの検証か！🐛 衝突判定のメッシュ精度なら自信があるよ！」', weights: { C: 3 } }
       ];
       choices.forEach(c => {
         const b = document.createElement('button');
@@ -1607,22 +1732,22 @@ export function setupInteractions(camera) {
       promptEl.textContent = '「……今さら名乗るのも変な感じだけど、あなたには、知っておいてほしかったから。」';
       const choices = [
         {
-          label: '「君の本当の存在を確かめたい（直接的突破）」',
+          label: '「君の本当の存在を確かめたい」',
           weights: { D: 3 },
           reply: '夏江「……！ 真っ直ぐ目を見て言ってくれるんだね。……私の名前は夏江。覚えておいてね。」'
         },
         {
-          label: '「聞かせてほしい（関心と共鳴）」',
+          label: '「聞かせてほしい」',
           weights: { I: 3 },
           reply: '夏江「……夏江。私の名前。私を見つけてくれて、ありがとう。あなたがいてくれて、本当によかった。」'
         },
         {
-          label: '「無理に言わなくていいよ（穏やかな配慮）」',
+          label: '「無理に言わなくていいよ」',
           weights: { S: 3 },
           reply: '観測者「……ありがとう。その優しさ、すごく温かいよ。でも、あなたにはいつかちゃんと名乗りたいな。」'
         },
         {
-          label: '「都民台帳の記録データと照合する（論理分析）」',
+          label: '「都民台帳の記録データと照合する」',
           weights: { C: 3 },
           reply: '夏江「ふふ、データ照合なんだ。でも、記録よりもあなたに覚えていてもらえる方が、ずっと安心するな。」'
         }
@@ -1648,22 +1773,22 @@ export function setupInteractions(camera) {
       promptEl.textContent = '夏江「ねえ。私のこと、覚えてる？」';
       const choices = [
         {
-          label: '「絶対に忘れない。約束する（強い誓約）」',
+          label: '「絶対に忘れない。約束する」',
           weights: { D: 3 },
           reply: '夏江「……ふふ。そんなに真っ直ぐ言われると照れるな。でも……うん、ありがとう。覚えときなさいよ。」'
         },
         {
-          label: '「ネオン・フィードに私たちの夜の写真を刻んでおくよ（表現と波及）」',
+          label: '「ネオン・フィードに私たちの夜の写真を刻んでおくよ」',
           weights: { I: 3 },
           reply: '夏江「写真……！ うん、街の誰かが忘れても、光の記録に残るなら嬉しいな。」'
         },
         {
-          label: '「もちろん、覚えているよ（静かな記憶）」',
+          label: '「もちろん、覚えているよ」',
           weights: { S: 3 },
           reply: '夏江「……そっか。じゃあ、覚えときなさいよ。この街にいた、私のこと。私が何者だったか、ちゃんと説明できなくてもいいから。……ここにいたことくらい、覚えときなさいよ。」'
         },
         {
-          label: '「観測ログの不揮発性領域に完全保存した（客観的論理）」',
+          label: '「観測ログの不揮発性領域に完全保存した」',
           weights: { C: 3 },
           reply: '夏江「不揮発性メモリ……ふふ、都民らしい記録の仕方。消えないなら、それでいいよ。」'
         }
@@ -1721,14 +1846,14 @@ export function setupInteractions(camera) {
             }
           },
           {
-            label: '「もっと美味しい自販機へ案内するよ（主導的）」',
+            label: '「もっと美味しい自販機へ案内するよ」',
             weights: { D: 3 },
             action: () => {
               return `${name}「案内してくれるの？ ありがとう！ あなたの後ろをついていくね。」`;
             }
           },
           {
-            label: '「パンの糖分と深夜の覚醒作用を計算する（論理）」',
+            label: '「パンの糖分と深夜の覚醒作用を計算する」',
             weights: { C: 3 },
             action: () => {
               return `${name}「ふふ、カロリー計算？ でも夜中に食べる甘いものって、計算できないくらい心を満たしてくれるよ。」`;
@@ -1749,22 +1874,22 @@ export function setupInteractions(camera) {
         promptEl.textContent = `${name}「夜中にコンビニで買う菓子パンって、不思議と安心するよね。夜光自販機にも売ってるかな？」`;
         const choices = [
           {
-            label: '「今度買ってきてあげるよ（約束と共鳴）」',
+            label: '「今度買ってきてあげるよ」',
             weights: { I: 2, S: 1 },
             reply: `${name}「本当？ 嬉しいな。チョココロネがあったら教えてね。」`
           },
           {
-            label: '「今すぐ自販機に買いに行こう！（即時主導）」',
+            label: '「今すぐ自販機に買いに行こう！」',
             weights: { D: 3 },
             reply: `${name}「わ、行動が早い！ ふふ、ついていくね。」`
           },
           {
-            label: '「静かな雨宿りだけで十分落ち着くよ（静穏）」',
+            label: '「静かな雨宿りだけで十分落ち着くよ」',
             weights: { S: 3 },
             reply: `${name}「うん……この静けさも、すごく贅沢な時間だよね。」`
           },
           {
-            label: '「自販機の賞味期限と補充サイクルを推測する（分析）」',
+            label: '「自販機の賞味期限と補充サイクルを推測する」',
             weights: { C: 3 },
             reply: `${name}「補充サイクル……ふふ、都民らしい観察眼だね。」`
           }
@@ -1785,22 +1910,22 @@ export function setupInteractions(camera) {
       promptEl.textContent = `${name}「ねえ。ここの夜景、きれいだと思う？」`;
       const picks = [
         {
-          label: '「きれいだと思う。心に残るよ（共鳴と表現）」',
+          label: '「きれいだと思う。心に残るよ」',
           weights: { I: 2, S: 1 },
           reply: `${name}「……そっか。明るいビルを見るたびに、少し切なくなるけど……あなたと見てるこの景色は温かいよ。」`
         },
         {
-          label: '「見慣れた景色だけど、落ち着くね（安定と安らぎ）」',
+          label: '「見慣れた景色だけど、落ち着くね」',
           weights: { S: 3 },
           reply: `${name}「ふふ、都民らしい穏やかな答え。毎晩同じ景色でも、静けさがあって好きだな。」`
         },
         {
-          label: '「君はどう思うの？ 意見を聞かせて（主導的質問）」',
+          label: '「君はどう思うの？ 意見を聞かせて」',
           weights: { D: 2, I: 1 },
           reply: `${name}「……！ 私に聞くんだ。いつも、私がどう思うかなんて誰にも聞かれたことなかったから……嬉しいよ。」`
         },
         {
-          label: '「ビル群の照度と電力効率を分析する（論理測定）」',
+          label: '「ビル群の照度と電力効率を分析する」',
           weights: { C: 3 },
           reply: `${name}「オシロスコープみたいな目で街を見てるんだね。でも、その冷静さが頼もしいよ。」`
         }
@@ -1820,22 +1945,22 @@ export function setupInteractions(camera) {
       promptEl.textContent = `${name}「人って、名前の後ろにいろいろ属性を付け足すじゃない？ ……それって、説明できない部分は、その人じゃないってことなのかな。」`;
       const picks = [
         {
-          label: '「他人に決めつけられず、自分の道を行けばいい（主導性）」',
+          label: '「他人に決めつけられず、自分の道を行けばいい」',
           weights: { D: 3 },
           reply: `${name}「……！ そっか。他人の言葉じゃなくて、自分の足で歩くことが全てなんだね。」`
         },
         {
-          label: '「説明できない曖昧な部分こそが、その人だよ（共鳴と直感）」',
+          label: '「説明できない曖昧な部分こそが、その人だよ」',
           weights: { I: 2, S: 1 },
           reply: `${name}「言葉にできない曖昧な部分……ふふ、温かい考え方だね。救われた気がする。」`
         },
         {
-          label: '「分からないままでも、静かにここにいていいんだよ（受容と安定）」',
+          label: '「分からないままでも、静かにここにいていいんだよ」',
           weights: { S: 3 },
           reply: `${name}「……うん。分からないままでも、この雨の街に立っていていいんだね。」`
         },
         {
-          label: '「属性と自己同一性の論理的矛盾を整理しよう（論理分析）」',
+          label: '「属性と自己同一性の論理的矛盾を整理しよう」',
           weights: { C: 3 },
           reply: `${name}「命題として分解するんだね。理屈で考えると、少し頭がすっきりするかも。」`
         }
@@ -1854,10 +1979,10 @@ export function setupInteractions(camera) {
       inputWrap?.classList.remove('hidden');
       promptEl.textContent = `${name}「……ふと、誰かと話したくなったの。何か話したい気がするのに、何を話したいのか分からなくて……あなたの言葉を、何か聞かせて？」`;
       const shortcuts = [
-        { text: '「行くよ、街を引っ張って案内する（主導）」', weights: { D: 3 } },
-        { text: '「写真撮ってフィードに載せよう（感化）」', weights: { I: 3 } },
-        { text: '「雨が静かで落ち着くね（安定）」', weights: { S: 3 } },
-        { text: '「雨天のノイズ波形を解析してみよう（論理）」', weights: { C: 3 } }
+        { text: '「行くよ、街を引っ張って案内する」', weights: { D: 3 } },
+        { text: '「写真撮ってフィードに載せよう」', weights: { I: 3 } },
+        { text: '「雨が静かで落ち着くね」', weights: { S: 3 } },
+        { text: '「雨天のノイズ波形を解析してみよう」', weights: { C: 3 } }
       ];
       shortcuts.forEach(s => {
         const b = document.createElement('button');
@@ -1970,6 +2095,98 @@ export function setupInteractions(camera) {
   // NPC Approach triggers Encounter Event Modal
   window.addEventListener('npc-approach', e => {
     launchNpcApproachEncounter(e.detail.name, e.detail.kind, e.detail.item);
+  });
+
+  let focusedTarget = null;
+  let focusedTargetTimer = null;
+
+  window.addEventListener('world-tap', e => {
+    if (active) return;
+    const clientX = e.detail?.clientX;
+    const clientY = e.detail?.clientY;
+    if (clientX == null || clientY == null) return;
+
+    const mouse = new THREE.Vector2(
+      (clientX / window.innerWidth) * 2 - 1,
+      -(clientY / window.innerHeight) * 2 + 1
+    );
+    const tapRay = new THREE.Raycaster();
+    tapRay.setFromCamera(mouse, camera);
+
+    // 1. Check if an NPC agent was tapped
+    for (const agent of npcAgents) {
+      if (!agent.interactable || !agent.object) continue;
+      const agentPos = agent.object.position;
+      if (camera.position.distanceTo(agentPos) > 9.5) continue;
+
+      const vToAgent = agentPos.clone().add(new THREE.Vector3(0, 1.0, 0)).sub(camera.position);
+      const proj = vToAgent.dot(tapRay.ray.direction);
+      if (proj <= 0) continue;
+      const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
+      const distToRay = closestPoint.distanceTo(agentPos.clone().add(new THREE.Vector3(0, 1.0, 0)));
+
+      if (distToRay < 1.45) {
+        if (focusedTarget === agent) {
+          // 2nd tap: Open dialogue!
+          open(agent.interactable);
+          focusedTarget = null;
+          clearTimeout(focusedTargetTimer);
+        } else {
+          // 1st tap: NPC pauses and turns to face player
+          focusedTarget = agent;
+          agent.wait = 20;
+          agent.walking = false;
+          const dx = camera.position.x - agent.object.position.x;
+          const dz = camera.position.z - agent.object.position.z;
+          agent.object.rotation.y = Math.atan2(dx, dz) + (agent.kind === 'caterpillar' || agent.kind === 'observer' ? Math.PI : 0);
+          const name = (agent.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : agent.name;
+          toast('（' + name + 'が足を止め、こちらを向いた。もう一度タップで話しかける）');
+          current = agent.interactable;
+          interact.classList.remove('hidden');
+          document.getElementById('targetType').textContent = agent.interactable.type;
+          document.getElementById('targetName').textContent = name;
+          document.getElementById('targetHint').textContent = 'もう一度タップで対話開始';
+          clearTimeout(focusedTargetTimer);
+          focusedTargetTimer = setTimeout(() => {
+            if (focusedTarget === agent) focusedTarget = null;
+          }, 5000);
+        }
+        return;
+      }
+    }
+
+    // 2. Check if an interactable object was tapped
+    for (const item of interactables) {
+      if (item.kind === 'darling' || item.kind === 'caterpillar' || item.kind === 'observer') continue;
+      if (camera.position.distanceTo(item.position) > 8.0) continue;
+
+      const vToItem = item.position.clone().add(new THREE.Vector3(0, 0.8, 0)).sub(camera.position);
+      const proj = vToItem.dot(tapRay.ray.direction);
+      if (proj <= 0) continue;
+      const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
+      const distToRay = closestPoint.distanceTo(item.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
+
+      if (distToRay < 1.55) {
+        if (focusedTarget === item) {
+          open(item);
+          focusedTarget = null;
+          clearTimeout(focusedTargetTimer);
+        } else {
+          focusedTarget = item;
+          toast();
+          current = item;
+          interact.classList.remove('hidden');
+          document.getElementById('targetType').textContent = item.type;
+          document.getElementById('targetName').textContent = item.name;
+          document.getElementById('targetHint').textContent = 'もう一度タップで調査開始';
+          clearTimeout(focusedTargetTimer);
+          focusedTargetTimer = setTimeout(() => {
+            if (focusedTarget === item) focusedTarget = null;
+          }, 5000);
+        }
+        return;
+      }
+    }
   });
 
   window.addEventListener('npc-social', e => {

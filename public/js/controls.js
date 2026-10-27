@@ -84,10 +84,15 @@ export function setupControls(camera, renderer) {
     knob.style.transform = `translate(${stick.x * 35}px,${stick.y * 35}px)`;
   }
 
+  let touchStartPos = null;
+  let touchStartTime = 0;
+
   renderer.domElement.addEventListener(
     'touchstart',
     e => {
       for (const t of e.changedTouches) {
+        touchStartPos = { x: t.clientX, y: t.clientY };
+        touchStartTime = Date.now();
         if (t.clientX > innerWidth * 0.45) lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
       }
     },
@@ -114,6 +119,14 @@ export function setupControls(camera, renderer) {
     'touchend',
     e => {
       for (const t of e.changedTouches) {
+        if (touchStartPos && Date.now() - touchStartTime < 350) {
+          const moveDist = Math.hypot(t.clientX - touchStartPos.x, t.clientY - touchStartPos.y);
+          if (moveDist < 14) {
+            window.dispatchEvent(new CustomEvent('world-tap', {
+              detail: { clientX: t.clientX, clientY: t.clientY }
+            }));
+          }
+        }
         if (lookTouch && t.identifier === lookTouch.id) lookTouch = null;
       }
     },

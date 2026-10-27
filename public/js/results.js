@@ -238,6 +238,9 @@ export class ResultsController {
       actions: analysis.actions
     });
 
+    // Google Apps Script (GAS) への静默送信（URL設定時のみ動作）
+    this.sendToGasIfConfigured(scores, arch.title);
+
     this.modal?.classList.remove('hidden');
   }
 
@@ -273,6 +276,37 @@ export class ResultsController {
       };
     } catch {
       return { isFirst: true, text: '初回観測：行動プロファイルのベースラインを確立しました。' };
+    }
+  }
+
+  sendToGasIfConfigured(scores, archetypeTitle) {
+    try {
+      const gasUrl = window.GAS_WEBAPP_URL || localStorage.getItem('gas_webapp_url');
+      if (!gasUrl) return;
+      const rel = getRelationshipStatus();
+      const selfInputEl = document.getElementById('selfTypeInput');
+      const payload = {
+        timestamp: new Date().toLocaleString('ja-JP'),
+        selfType: selfInputEl?.value.trim() || '未設定',
+        archetype: archetypeTitle,
+        scores,
+        totalActions: analysis.actions,
+        walkDistance: analysis.walkDistance,
+        runDistance: analysis.runDistance,
+        anomaliesFixed: cityMemory.anomaliesFixed || 0,
+        errandsCompleted: cityMemory.errandsCompleted || 0,
+        npcStatus: `ダーリン: ${rel.darlingStatus} / 夏江: ${rel.natsueStatus} / 芋虫: ${rel.caterpillarStatus}`,
+        inventory: window.getCurrentInventory?.() || [],
+        logSummary: analysis.logs.slice(0, 10).map(l => `[${l.time}] ${l.type}: ${l.detail}`).join(' // ')
+      };
+      fetch(gasUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.log('GAS transmission ignored:', err));
+    } catch (e) {
+      console.warn('GAS payload error:', e);
     }
   }
 
@@ -343,20 +377,17 @@ export class ResultsController {
     if (prefEl) prefEl.textContent = archetype.preferred;
     if (avoidEl) avoidEl.textContent = archetype.avoided;
 
-    // NPCとの対話傾向
+    // NPCとの対話傾向・親密度
     const npcLogEl = document.getElementById('resNpcTendencies');
     if (npcLogEl) {
+      const rel = getRelationshipStatus();
       const lines = [];
-      if (cityMemory.natsueAffection > 0 || cityMemory.natsueNameRevealed) {
-        lines.push(`・観測者（夏江）：${cityMemory.natsueNameRevealed ? '本名「夏江」の記憶を共有。精神的アンカー確立。' : '夜景や菓子パンの思い出を分かち合い、心の距離を縮めた。'}`);
+      lines.push(`・ダーリンちゃん：${rel.darlingStatus}`);
+      lines.push(`・観測者（夏江）：${rel.natsueStatus}`);
+      lines.push(`・LSI芋虫：${rel.caterpillarStatus}`);
+      if (cityMemory.errandsCompleted > 0) {
+        lines.push(`🌟 達成した住人のおつかい・物々交換：${cityMemory.errandsCompleted} 件`);
       }
-      if (cityMemory.darlingSpentTimeCount > 0 || cityMemory.darlingIgnoredCount > 0) {
-        lines.push(`・ダーリンちゃん：${cityMemory.darlingSpentTimeCount > cityMemory.darlingIgnoredCount ? '気まぐれな誘いに静かに付き合い、退屈を分かち合った。' : '強引な誘惑を振り切り、自身の探索ペースを貫徹した。'}`);
-      }
-      if (cityMemory.caterpillarTapsCount > 0 || cityMemory.caterpillarConsultCount > 0) {
-        lines.push(`・LSI芋虫：論理パズルや境界線の定義について討議し、構造的思考を検証。`);
-      }
-      if (!lines.length) lines.push('・住人との深い接触は控え、街の景観と異常調査を単独で推進。');
       npcLogEl.innerHTML = lines.map(l => `<li>${l}</li>`).join('');
     }
 
