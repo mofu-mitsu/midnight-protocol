@@ -1,69 +1,1804 @@
 import * as THREE from 'three';
-import {interactables} from './world.js';
-import {record} from './analysis.js';
-let active=null;let insideArchive=false;let mission=null;let observerFollow=false;let previousTopics={};let socialClue=false;let inventory=[];let caterpillarTaps=0;let missionClues=0;const raycaster=new THREE.Raycaster();const center=new THREE.Vector2(0,0);const interact=document.getElementById('interact');
-export function setupInteractions(camera){const notice=document.getElementById('notice');let noticeTimer;function toast(t){notice.textContent=t;notice.classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.classList.remove('show'),2800)}
-function open(item){if(!item)return;window.dispatchEvent(new CustomEvent('inventory-update',{detail:{items:inventory.slice()}}));document.exitPointerLock?.();active=item;window.dispatchEvent(new CustomEvent('npc-focus',{detail:{item}}));document.getElementById('dialogTag').textContent='OBSERVED ENTITY // '+item.type;document.getElementById('dialogTitle').textContent=item.name;document.getElementById('dialogText').textContent=makeGreeting(item);const actions=document.getElementById('dialogActions');actions.replaceChildren();const options=item.kind==='building'?[['中に入る',{D:1}],['構造を調べる',{C:1}],['誰かいないか呼ぶ',{I:1}],['周囲を確認してから入る',{S:1}],['入口を無視する',{D:1}]]:item.kind==='terminal'?[['情報を解析する',{C:1}],['管理権限を奪う',{D:1}],['通行人に尋ねる',{I:1}],['記録を保存して離れる',{S:1}],['端末を強制再起動する',{D:1,C:1}]]:item.kind==='darling'?[['話を聞く',{I:1}],['理由を分析する',{C:1}],['こちらの話をする',{S:1}],['冗談でごまかす',{I:1,D:1}],['反応せず通り過ぎる',{D:1}],['突然走り出す',{D:1,S:1}]]:item.kind==='caterpillar'?[['観察を続ける',{C:1}],['理論に反論する',{D:1}],['気持ちを尋ねる',{I:1}],['隣で静かに考える',{S:1}],['芋虫を追いかける',{D:1,I:1}]]:item.kind==='chaos'?[['カオスに突っ込む',{D:2}],['遠くから観察する',{C:1}],['誰かを呼ぶ',{I:1}],['安全な場所で待つ',{S:1}],['異常を無視して進む',{D:1,S:1}],['都市のルールを破壊する',{D:1,C:1}]]:item.kind==='observer'?[['一緒に歩く',{S:1}],['街の意味を聞く',{I:1}],['観測結果を共有する',{C:1}],['先に進む',{D:1}]]:[['調べる',{C:1}],['大胆に触れる',{D:1}],['写真を撮る',{I:1}],['少し待つ',{S:1}]];
-let dynamicOptions=options.slice();
-if(item.kind==='observer')dynamicOptions=observerFollow?[['バイバイする（同行をやめる）',{S:1}],['街の意味を聞く',{I:1}],['観測結果を共有する',{C:1}]]:[['一緒に歩く（ついてきてもらう）',{S:1}],['街の意味を聞く',{I:1}],['観測結果を共有する',{C:1}],['先に進む',{D:1}]];
-if(item.name==='忘失物ボックス')dynamicOptions=[['通行人に尋ねる（ミッション開始）',{I:1}],['中身を詳しく調べる',{C:1}],['持ち主を探す',{S:1}],['そのまま立ち去る',{D:1}]];
-if(mission&&['darling','caterpillar','observer'].includes(item.kind))dynamicOptions.push(['忘失物について尋ねる',{I:1,C:1}]);
-if(item.kind==='terminal'&&item.name==='公共端末')dynamicOptions.push(['通行人に尋ねる（ミッション開始）',{I:1}]);
-if(item.kind==='darling')dynamicOptions.push(['自由記述で返事をする',{I:1}]);if(item.kind==='caterpillar'){dynamicOptions.push(['「お前は何者？」と聞く',{C:1}],['「感情はあるの？」と聞く',{I:1}],['「その境界線って何？」と聞く',{D:1}]);}
-if(item.name==='雨宿りベンチ')dynamicOptions.unshift(['メモを読む・持ち物に入れる',{C:1,I:1}]);
-if(item.name==='夜光自販機'||item.name==='自販機')dynamicOptions.unshift(['飲み物を選ぶ',{S:1}]);
-if(item.kind==='caterpillar')dynamicOptions.push(['芋虫をタップする',{D:1}]);if(item.kind==='caterpillar')dynamicOptions.push(['自由入力で芋虫に返す',{I:1}]);
-if(['darling','caterpillar','observer'].includes(item.kind)&&inventory.length)dynamicOptions.push(['持ち物を渡す',{I:1,S:1}]);
-const categoryGroups={};const categoryFor=label=>/持ち物|渡す|飲み物|メモ/.test(label)?'持ち物':/ミッション|忘失物について/.test(label)?'ミッション':/聞く|尋ねる|話|返事|質問|気持ち|感情|何者|境界線|反論/.test(label)?'話す':/タップ|追いかける|突っ込む|破壊|触れる|走り出す/.test(label)?'特殊行動':'調べる';for(const [label,weights] of dynamicOptions){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',()=>{if(label==='メモを読む・持ち物に入れる'){inventory.push('ベンチのメモ');window.dispatchEvent(new CustomEvent('inventory-update',{detail:{items:inventory.slice()}}));record('アイテム入手','ベンチのメモを持ち物に入れた',{C:1,I:1});document.getElementById('dialogText').textContent='メモには「流れ星が消えた場所で、街の地図にない道が開く」と書かれている。メモを持ち物に入れた。';toast('持ち物：ベンチのメモを入手');return;}if(label==='飲み物を選ぶ'||label.startsWith('購入：')){if(label==='飲み物を選ぶ'){document.getElementById('dialogText').textContent='自販機のパネルが点灯した。どの飲み物にする？';const actions=document.getElementById('dialogActions');actions.replaceChildren();[['夜光ソーダ','青い泡が記憶を少し鮮明にする',{C:1}],['桃色ミルク','気分が少し軽くなる',{I:1}],['深夜コーヒー','眠気が遠のき、足取りが軽くなる',{D:1}],['星屑ウォーター','静かな集中が続く',{S:1}]].forEach(([name,effect,weights])=>{const b=document.createElement('button');b.textContent=name;b.addEventListener('click',()=>{inventory.push(name);window.dispatchEvent(new CustomEvent('inventory-update',{detail:{items:inventory.slice()}}));record('アイテム購入',name+'を購入。'+effect,weights);document.getElementById('dialogText').textContent='「'+name+'」を購入した。'+effect+'。持ち物に追加した。';toast('持ち物：'+name+'を入手');});actions.append(b)});const back=document.createElement('button');back.textContent='戻る';back.addEventListener('click',()=>open(item));actions.append(back);return;}return;}if(label==='持ち物を渡す'){const gift=inventory.shift();window.dispatchEvent(new CustomEvent('inventory-update',{detail:{items:inventory.slice()}}));const line=item.kind==='darling'?'「えっ、私にくれるの？ ありがとう、宝物にするね！」':item.kind==='caterpillar'?'「贈与行動を確認。物品を記録対象として受領する。」':'「私に？ ありがとう。大事にするね。」';document.getElementById('dialogText').textContent='あなたは「'+gift+'」を'+item.name+'に渡した。'+line;record('アイテム譲渡',gift+'を'+item.name+'に渡した',{I:1,S:1});toast('持ち物を渡した：'+gift);return;}if(item.kind==='caterpillar'&&label==='芋虫をタップする'){caterpillarTaps++;const tapLines=['「やめろ！ お前はSLEか？」','「接触回数を記録するな！ 記録を消せ！」','「これは対話ではない。物理的な圧力だ！」','「境界線！ 境界線を守りたまえ！」','「なぜタップする？ 理由を述べよ！」','「私は緑色の会議体ではない！」','「その指を止めたまえ！」','「……今のは不意打ちだ。次は予測する」'];record('芋虫タップ','LSI芋虫への接触 '+caterpillarTaps,{D:1});if(caterpillarTaps>=30){caterpillarTaps=0;document.getElementById('dialogText').textContent='ぷちっ。\n\n「やめろ！ お前はSLEか！？」\n\n緑色の残像だけが路面に残った……';window.dispatchEvent(new CustomEvent('caterpillar-crush',{detail:{item}}));toast('侵入個体の反応が消失した');}else{document.getElementById('dialogText').textContent='ぷにっ。\n\n'+tapLines[Math.floor(Math.random()*tapLines.length)];}return;}if(item.kind==='caterpillar'&&label==='自由入力で芋虫に返す'){const answer=prompt('LSI芋虫に自由に返事してみよう');if(answer&&answer.trim()){const reactions=['「……その発言は分類不能。記録を保留する」','「反論を受理。根拠があれば提示したまえ」','「なぜ君は、私の反応を確かめようとする？」','「境界線の内側で、その質問をもう一度してくれ」'];document.getElementById('dialogText').textContent='「'+answer+'」\n\n'+reactions[Math.floor(Math.random()*reactions.length)];record('芋虫への自由入力',answer,{C:/理|構造|定義|分析|変数/.test(answer)?1:0,D:/違う|反対|やめろ|嫌|潰/.test(answer)?1:0,I:/気持ち|好き|怖|感情/.test(answer)?1:0,S:/待つ|静か|一緒/.test(answer)?1:0});}return;}if(item.kind==='caterpillar'&&label==='「お前は何者？」と聞く'){const lines=['「私はLSI。境界線を確保し、侵入者を分類している。君はなぜ私をタップする？」','「分類番号LSI。規則・定義・境界の維持を担当している。異議はあるか？」','「私は都市の輪郭を守るもの。輪郭が消えれば、内側も外側もなくなる」','「名前はLSI芋虫。役割は監視。趣味は……記録にない」'];document.getElementById('dialogText').textContent=lines[Math.floor(Math.random()*lines.length)];record('芋虫への質問','LSI芋虫の正体を尋ねた',{C:1});return;}if(item.kind==='caterpillar'&&label==='「感情はあるの？」と聞く'){const lines=['「感情という未定義変数を持ち込むな。……ただし、潰されるのは嫌だ」','「恐怖は危険回避の信号だ。ならば、これは恐怖と定義できるのか？」','「感情はない。……ないはずだ。なぜその質問を繰り返す？」','「私の反応を感情と呼ぶなら、君のタップも対話と呼べるのかね？」'];document.getElementById('dialogText').textContent=lines[Math.floor(Math.random()*lines.length)];record('芋虫への質問','感情について尋ねた',{I:1});return;}if(item.kind==='caterpillar'&&label==='「その境界線って何？」と聞く'){const lines=['「境界線確保。侵入継続。感覚支配成功。……これ以上近づくな」','「こちらと向こうを分ける線だ。君はなぜ、それを越えたがる？」','「線を引けば安心できる。だが、線の外側に何があるかは分からない」','「境界は守るためにある。破るためにあると言う者もいるがね」'];document.getElementById('dialogText').textContent=lines[Math.floor(Math.random()*lines.length)];record('芋虫への質問','境界線について尋ねた',{D:1});return;}if(item.kind==='observer'&&(label.startsWith('一緒に歩く')||label.startsWith('バイバイする'))){observerFollow=label.startsWith('一緒に歩く');window.dispatchEvent(new CustomEvent('npc-follow',{detail:{enabled:observerFollow}}));record('同行',observerFollow?'観測者が後ろをついてくる':'観測者が同行をやめた',{S:1});close();document.getElementById('notice').textContent=observerFollow?'観測者「うん、少し後ろを歩くね。気になるものがあったら教えて」':'観測者「ここまで一緒に歩けてよかった。また気が向いたら誘ってね」';toast(observerFollow?'観測者「うん、少し後ろを歩くね」':'観測者「また一緒に散歩しようね」');return;}if(item.kind==='terminal'&&item.name==='公共端末'&&label.startsWith('通行人に尋ねる')){mission='通行人への聞き込み';window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:'ミッション：通行人3人から「昨夜の流れ星」の目撃情報を集める'}}));record('ミッション開始',mission,{I:1});close();toast('ミッション開始！ダーリンちゃん、LSI芋虫、観測者に聞き込みしよう。');return;}if(item.name==='忘失物ボックス'&&label.startsWith('通行人に尋ねる')){mission='忘失物の持ち主を探す';window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:'ミッション：通行人に忘失物の持ち主を尋ねる'}}));record('ミッション開始',mission,{I:1});close();toast('ミッション開始！ダーリンちゃんや芋虫に聞いてみよう。');return;}if(mission&&label==='忘失物について尋ねる'){missionClues++;const answer=mission==='通行人への聞き込み'?(item.kind==='darling'?'「昨夜、青白い光が空を横切ったの！ あれって流れ星かな？」':item.kind==='caterpillar'?'「天体現象の目撃証言を確認。発生地点は北西方向と推定する。」':'「私も見たよ。落ちた場所に何かあるかもしれないね。」'):(item.kind==='darling'?'「それ私のじゃないよ。でもバス停の近くで誰かが探してた気がする……」':item.kind==='caterpillar'?'「拾得地点と紛失地点を照合したまえ。バス停周辺の確認を推奨する。」':'「バス停の近くで困っている人を見たよ。」');document.getElementById('dialogText').textContent=answer;mission=mission==='通行人への聞き込み'?'流星の聞き込みを進行中':'忘失物の手がかりを得た';window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:mission==='流星の聞き込みを進行中'?'ミッション更新：聞き込み記録を集めた。空を観測しよう':'ミッション更新：バス停付近で手がかりを確認する'}}));record('ミッション手がかり',item.name+'から情報を得た',{I:1,C:1});if(missionClues>=3){missionClues=0;mission='完了';const reward=['星屑の欠片','旧市街の鍵','観測記録の断片'][Math.floor(Math.random()*3)];inventory.push(reward);window.dispatchEvent(new CustomEvent('inventory-update',{detail:{items:inventory.slice()}}));window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:'ミッション達成：聞き込みが完了。報酬「'+reward+'」を入手'}}));record('ミッション達成','報酬 '+reward+' を入手',{C:1,I:1});toast('ミッション達成！報酬：'+reward);}return;}if(item.kind==='darling'&&label==='自由記述で返事をする'){const answer=prompt('ダーリンちゃんに何と返事する？');if(answer&&answer.trim()){const weights=/死ね|しね|消え|カス/i.test(answer)?{D:2}:/キモ|きも|嫌|無理|うざ|黙|反対|no/i.test(answer)?{D:1}:/好き|かわいい|ありがとう|嬉し|うれし/i.test(answer)?{I:1,S:1}:{C:1};record('自由記述',answer,weights);document.getElementById('dialogText').textContent=/死ね|しね|消え|カス/i.test(answer)?'「……そんなに強く言わなくてもいいじゃん……」':/キモ|きも|嫌|無理|うざ|黙|反対|no/i.test(answer)?'「そっか。今は近づかない方がよさそうだね……」':'「……その言葉、ちゃんと記録しておくね。」';close();toast('返答を記録しました。');}return;}if(item.kind==='building'&&label==='中に入る'&&item.object.userData.open===false){close();toast('扉は閉鎖中。開く時刻まで探索しよう。');return;}if(item.kind==='building'&&label==='中に入る'){camera.position.set(10,1.65,-27);insideArchive=true;record('建物への進入','ネオン・アーカイブに入った',{C:1,S:1});close();toast('ネオン・アーカイブに入室しました。');return;}if(item.kind==='building'&&label==='中に入る'&&insideArchive){camera.position.set(0,1.65,-20);insideArchive=false;close();return;}if(item.kind==='chaos'&&label==='カオスに突っ込む'){record('カオス接触','未定義の行動を実行した',{D:2});camera.position.x+=(Math.random()-.5)*8;camera.position.z-=8;window.dispatchEvent(new CustomEvent('city-chaos',{detail:{kind:'jump'}}));toast('警告：観測座標が変動。街の構造が一時的に書き換わった！');}else if(label==='誰かを呼ぶ'){window.dispatchEvent(new CustomEvent('npc-call-nearest',{detail:{position:camera.position.clone()}}));record('NPC呼び出し','最寄りの通行人を呼んだ',{I:1});toast('最寄りの通行人に呼びかけた……');close();return;}else if(label==='反応せず通り過ぎる'||label==='立ち去る'||label==='異常を無視して進む')record('回避行動',item.name+'を通り過ぎた',weights);else record('対象との接触',item.name+'：'+label,weights);previousTopics[item.name]=label;const reply=getReply(item,label);if(reply){document.getElementById('dialogText').textContent=reply;document.getElementById('dialog').classList.remove('hidden');active=item;window.dispatchEvent(new CustomEvent('npc-focus',{detail:{item}}));return;}close();toast('行動記録を更新しました。')});const category=categoryFor(label);if(!categoryGroups[category]){const group=document.createElement('div');group.className='action-category';const heading=document.createElement('strong');heading.className='action-category-title';heading.textContent=category;group.append(heading);const list=document.createElement('div');list.className='action-category-options';group.append(list);categoryGroups[category]={group,list};}categoryGroups[category].list.append(b)}
-const root=document.createElement('div');root.className='action-category-root';const back=document.createElement('button');back.textContent='← カテゴリに戻る';back.className='category-back hidden';back.addEventListener('click',()=>{root.classList.remove('hidden');for(const g of Object.values(categoryGroups))g.group.classList.add('hidden');back.classList.add('hidden')});actions.append(root,back);for(const category of ['話す','調べる','持ち物','ミッション','特殊行動'])if(categoryGroups[category]){const g=categoryGroups[category];g.group.classList.add('hidden');const pick=document.createElement('button');pick.textContent=category;pick.addEventListener('click',()=>{root.classList.add('hidden');for(const other of Object.values(categoryGroups))other.group.classList.add('hidden');g.group.classList.remove('hidden');back.classList.remove('hidden')});root.append(pick);actions.append(g.group)}document.getElementById('dialog').classList.remove('hidden');}
-function makeGreeting(item) {
-  const past = previousTopics[item.name];
-  if (past) {
-    if (item.name === '観測者') return '「この前は『' + past + '』を選んだよね。今日はどうする？」';
-    if (item.name === 'ダーリンちゃん') return '「ダーリン！この前は『' + past + '』って言ってたよね。今日は私の話も聞いて？」';
-    return '「前回の選択は『' + past + '』だったな。行動の一貫性を観測している。」';
+import { interactables, LOCATIONS, scene } from './world.js';
+import { record } from './analysis.js';
+import { cityMemory, updateMemory } from './memory.js';
+
+let active = null;
+let insideArchive = false;
+let mission = '街中の異常（配線盤・信号機・矛盾看板）を発見し、調査せよ';
+let observerFollow = false;
+let previousTopics = {};
+let inventory = [];
+window.getCurrentInventory = () => inventory.slice();
+let caterpillarTaps = 0;
+let darlingBoredom = 0;
+let anomaliesCleared = 0;
+
+const raycaster = new THREE.Raycaster();
+const center = new THREE.Vector2(0, 0);
+const interact = document.getElementById('interact');
+
+// Se (Extroverted Sensing) trigger keywords
+const triggerKeywords = [
+  "きも", "うざ", "ウザ", "イラ", "苛", "いらっ", "嫌い", "うるさ", "だる", "あんぽんたん", "いいえ",
+  "アンポンタン", "キモ", "ゴミ", "カス", "オエー", "おえー", "きしょ", "キショ", "しね", 
+  "死ね", "やめて", "いや", "やめろ", "💢", "好きじゃない", "苦手", "きらい", "関わりたくない",  
+  "思ったか", "反対", "失せろ", "黙って", "殲滅", "うんこ", "うせろ", "面倒", "NO",  
+  "no", "帰れ", "kiero", "は？", "ハ？", "はあ", "ハア", "あっそ", "あっそー", "どうでもいい", 
+  "くだらない", "くだらね", "つまらん", "つまんね", "意味分からん", "意味不明", "勝手にしろ", 
+  "勝手に言っとけ", "消えろ", "消えろや", "引っ込んでろ", "黙れ", "ダマレ", "だまれ", "キチガイ", 
+  "バカ", "ばか", "アホ", "あほ", "不快", "腹立つ", "ムカつく", "むかつく", "煽るな",
+  "！！！", "!!!", "？？？", "???", "ｗｗｗ", "www", "ふざけ", "クソ", "くそ", "💩"
+];
+
+export function setupInteractions(camera) {
+  const notice = document.getElementById('notice');
+  let noticeTimer;
+
+  function toast(t) {
+    notice.textContent = t;
+    notice.classList.add('show');
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => notice.classList.remove('show'), 3800);
   }
-  let lines;
-  if (item.kind === 'darling') {
-    lines = ['「ねぇ、ダーリン♡ 今のその反応、“本音”と“演出”どっちが多いと思う？」', '「ダーリンってさ、自分では冷静なつもりでも、感情がログに漏れてる時あるよね♡」', '「ねぇ♡ “理解されたい”と“放っておいてほしい”、どっちも本当なんでしょ？」', '「簡単なことと困難なこと、どちらに惹かれるの？……複雑な故に価値を感じるタイプかしら、ダーリン♡」', '「今まであなたを最も破壊しかけた事象って何？……まだ未処理のまま残ってたりする？」'];
-  } else if (item.kind === 'caterpillar') {
-    lines = ['「観測を開始する。君は何を知りたい？」', '「行動には必ず何らかの構造がある。」', '「……立ち止まった理由を聞いてもいいかね？」'];
-  } else if (item.kind === 'observer') {
-    lines = observerFollow ? ['「一緒に歩いてるけど、どうしたの？」', '「この先も一緒に行こうか？」', '「何か気になるものを見つけた？」'] : ['「あ、来てくれたんだ。一緒に歩く？」', '「この街、少しずつ変わってる気がする。」', '「さっき見た景色、忘れたくないな。」'];
-  } else {
-    lines = [item.description];
-  }
-  return lines[Math.floor(Math.random() * lines.length)];
-}
-function getReply(item, label) {
-  const replies = {
-    'darling': {
-      '話を聞く': ['「うん……実はね、誰かにちゃんと見つけてほしいんだ」', '「今日ね、変な夢を見たの。街じゅうの看板が私の名前だった！」', '「聞いてくれるの？ えへへ、うれしい！」'],
-      '理由を分析する': ['「また分析してる！……でも、ちょっとだけ当たってるかも」', '「私の気持ちを数式にしたら、ダーリンは解ける？」'],
-      'こちらの話をする': ['「そうなんだ！ もっと聞かせて！」', '「その話、覚えておくね。次に会ったときも聞きたいな」'],
-      '冗談でごまかす': ['「もー！ ごまかしたでしょ！ でもちょっと笑っちゃった」', '「ふふっ、今のは記録しとこ！」'],
-      '突然走り出す': ['「えっ、待ってダーリン！ 置いてかないでー！」', '「急に走るの！？ 何か見つけた？」']
-    },
-    'caterpillar': {
-      '観察を続ける': ['「観察対象が観察を選択した。興味深い。」', '「データを蓄積しよう。結論は急がなくてよい。」'],
-      '理論に反論する': ['「反証を歓迎する。根拠を提示してくれたまえ。」', '「その仮説は面白い。変数を一つずつ確認しよう。」'],
-      '気持ちを尋ねる': ['「感情か……私はそれを分類する側だと思っていた。」', '「説明しきれない変数があることは認めよう。」'],
-      '隣で静かに考える': ['「沈黙も一つの応答だ。悪くない。」', '「思考の速度を合わせる必要はない。ゆっくり考えよう。」'],
-      '芋虫を追いかける': ['「待ちたまえ！ 実験対象を追跡するのは手順にない！」', '「追跡行動を確認。君は予測モデルを崩すのが好きらしい。」']
-    },
-    'observer': {
-      '街の意味を聞く': ['「意味はまだ分からない。でも、誰かと歩くと少し違って見えるよ。」', '「この街は、忘れたことまで保存してる気がする。」'],
-      '観測結果を共有する': ['「同じ景色でも、見えているものは違うんだね。」', '「その記録、あとで私にも見せてほしいな。」'],
-      '先に進む': ['「うん、またね。気をつけて。」', '「私はもう少しここを見てから行くね。」']
+
+  const discoveredMissions = new Set(['M_ANOMALY']);
+  const completedMissions = new Set();
+
+  function unlockMission(id, titleText) {
+    if (!discoveredMissions.has(id)) {
+      discoveredMissions.add(id);
+      window.dispatchEvent(new CustomEvent('mission-update', { detail: { text: titleText } }));
+      toast(titleText);
     }
+  }
+
+  function completeMission(id, completionText) {
+    if (!completedMissions.has(id)) {
+      completedMissions.add(id);
+      window.dispatchEvent(new CustomEvent('mission-update', { detail: { text: completionText } }));
+      toast(completionText);
+    }
+  }
+
+  function renderDialogActions(item) {
+    const actions = document.getElementById('dialogActions');
+    if (!actions) return;
+    actions.replaceChildren();
+
+    const dynamicOptions = getActionOptions(item);
+
+    for (const [label, weights] of dynamicOptions) {
+      const b = document.createElement('button');
+      b.textContent = label;
+      if (label.includes('プレゼント')) {
+        b.style.borderColor = 'rgba(255, 117, 200, 0.45)';
+        b.style.background = 'rgba(32, 14, 42, 0.9)';
+        b.style.color = '#ffd4f1';
+        b.style.boxShadow = '0 0 10px rgba(255, 117, 200, 0.2)';
+      } else if (label.includes('ミッション')) {
+        b.style.borderColor = 'rgba(114, 246, 255, 0.35)';
+        b.style.background = 'rgba(12, 28, 52, 0.85)';
+      }
+      b.addEventListener('click', () => handleOptionClick(item, label, weights));
+      actions.append(b);
+    }
+  }
+
+  function showDialogResult(item, label, reply, weights = {}) {
+    const dialogText = document.getElementById('dialogText');
+    const dialogActions = document.getElementById('dialogActions');
+    if (!dialogText || !dialogActions) return;
+
+    let dGain = weights.D ? `D+${weights.D} ` : '';
+    let iGain = weights.I ? `I+${weights.I} ` : '';
+    let sGain = weights.S ? `S+${weights.S} ` : '';
+    let cGain = weights.C ? `C+${weights.C} ` : '';
+    let gainStr = (dGain + iGain + sGain + cGain).trim() || '行動記録完了';
+
+    dialogText.innerHTML = `
+      <div class="action-feedback-banner">▶ 実行：${label}</div>
+      <div class="npc-response-bubble">${reply || '街のシステムに行動が記録された。周囲の環境が微かに呼応している。'}</div>
+      <div class="action-disc-gain">【観測解析】${gainStr}</div>
+    `;
+
+    dialogActions.replaceChildren();
+
+    const navWrap = document.createElement('div');
+    navWrap.className = 'action-result-nav';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'action-close-btn';
+    closeBtn.textContent = '✓ 会話を終える（閉じる）';
+    closeBtn.addEventListener('click', () => {
+      close();
+    });
+
+    navWrap.append(closeBtn);
+    dialogActions.append(navWrap);
+  }
+
+  function open(item) {
+    if (!item) return;
+    window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+    document.exitPointerLock?.();
+    active = item;
+    window.dispatchEvent(new CustomEvent('npc-focus', { detail: { item } }));
+
+    if (item.kind === 'vending') {
+      window.dispatchEvent(new CustomEvent('open-vending', { detail: { item } }));
+      return;
+    }
+
+    const displayName = (item.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : item.name;
+    document.getElementById('dialogTag').textContent = 'OBSERVED ENTITY // ' + item.type;
+    document.getElementById('dialogTitle').textContent = displayName;
+
+    const avatarEl = document.getElementById('dialogAvatar');
+    if (avatarEl) {
+      avatarEl.textContent =
+        item.kind === 'darling' ? '🥺' :
+        item.kind === 'caterpillar' ? '🐛' :
+        item.kind === 'observer' ? (cityMemory.natsueNameRevealed ? '👧' : '👤') :
+        item.kind?.startsWith('anomaly') ? '⚡' :
+        item.kind === 'building_entrance' || item.kind === 'building_exit' ? '🏛️' :
+        item.kind === 'interior_terminal' ? '💻' :
+        item.kind === 'interior_pod' ? '🛌' :
+        item.kind === 'bus_stop' ? '🚏' :
+        item.kind === 'trash' ? '🗑️' :
+        item.kind === 'bench' ? '🪑' : '📦';
+    }
+
+    document.getElementById('dialogText').textContent = makeGreeting(item);
+    renderDialogActions(item);
+    document.getElementById('dialog').classList.remove('hidden');
+  }
+
+  function addInventoryOptions(opts) {
+    if (inventory.length === 0) return;
+    for (const it of inventory) {
+      if (/コロネ|デニッシュ|パン|ソーダ|コーヒー|エスプレッソ|ミルク|ウォーター|ジュース|缶/.test(it)) {
+        opts.push([`🎁【プレゼントする】${it}を贈る（好意と交流）`, { I: 2, S: 1 }]);
+      } else {
+        opts.push([`🔍【手渡して見せる】${it}について意見を聞く`, { C: 2, I: 1 }]);
+      }
+    }
+  }
+
+  function addMissionInquiryOptions(opts) {
+    if (discoveredMissions.has('M_ANOMALY') && !completedMissions.has('M_ANOMALY')) {
+      opts.push(['【ミッション調査】街の異常個所を即座に修復・鎮圧する手順を問う', { D: 2 }]);
+      opts.push(['【ミッション対話】「街中でエラー起きてて笑う」と異常について雑談する', { I: 2 }]);
+      opts.push(['【ミッション確認】異常現象による都市住人への被害がないか安否を確認する', { S: 2 }]);
+      opts.push(['【ミッション照合】異常発生源のログ波形と通信エラーの相関データを照合する', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_NATSUE') && !completedMissions.has('M_NATSUE')) {
+      opts.push(['【ミッション追跡】「夏江」という都民の行方を追跡している。情報を要求する', { D: 2 }]);
+      opts.push(['【ミッション聞き込み】「夏江」って子を探してるんだけど、街で噂になってない？', { I: 2 }]);
+      opts.push(['【ミッション尋ねる】古い学生証を落とした「夏江」さんを探していて……何か知りませんか？', { S: 2 }]);
+      opts.push(['【ミッション照合】「夏江」という署名の生体ハッシュと都民台帳の照合結果を問う', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_PLATFORM0') && !completedMissions.has('M_PLATFORM0')) {
+      opts.push(['【ミッション強行】存在しない「0番線」の改札へ強行突入する方法を問う', { D: 2 }]);
+      opts.push(['【ミッション共有】都市伝説の「0番線」、フィードで超話題だから一緒に探そう！', { I: 2 }]);
+      opts.push(['【ミッション相談】深夜バス停で見つけた「0番線の切符」……これ、何だと思う？', { S: 2 }]);
+      opts.push(['【ミッション解析】非同期ダイヤグラムと0番線の運行規則の論理矛盾を解析する', { C: 2 }]);
+    }
+    if (discoveredMissions.has('M_CIRCUIT') && !completedMissions.has('M_CIRCUIT')) {
+      opts.push(['【ミッション特定】ゴミ箱で拾った電子基板の出所を力づくで特定させる', { D: 2 }]);
+      opts.push(['【ミッション話題】このピコピコ鳴る基板、めっちゃエモくない？ 何のパーツ？', { I: 2 }]);
+      opts.push(['【ミッション確認】雨に濡れたゴミ箱にあった壊れた基板……大事な部品なのかな？', { S: 2 }]);
+      opts.push(['【ミッション照合】ICチップのシリアル番号と都市管理端末のプロトコル互換性を照合する', { C: 2 }]);
+    }
+  }
+
+  function getActionOptions(item) {
+    if (item.kind === 'darling') {
+      const opts = [
+        ['「退屈なら、今すぐ私のペースに合わせてついて来なさい」と主導権を握る', { D: 2 }],
+        ['「感情がログに漏れてるよ♡」とからかって笑わせる', { I: 2 }],
+        ['甘えた猫なで声を優しく受け止め、静かに見守る', { S: 2 }],
+        ['「今のその反応、“本音”と“演出”どっち？」と論理分析する', { C: 2 }]
+      ];
+      if (cityMemory.darlingIgnoredCount >= 1) {
+        opts.unshift(['「この前放置してごめんね」と謝る', { S: 2, I: 1 }]);
+      }
+      addInventoryOptions(opts);
+      addMissionInquiryOptions(opts);
+      return opts;
+    }
+
+    if (item.kind === 'caterpillar') {
+      const opts = [
+        ['芋虫をタップする（SLE/LSE物理介入テスト）', { D: 2 }],
+        ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
+        ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
+        ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
+      ];
+      addInventoryOptions(opts);
+      addMissionInquiryOptions(opts);
+      return opts;
+    }
+
+    if (item.kind === 'observer') {
+      const opts = [
+        ['「行くよ。雨の街をぐいぐい引っ張って案内してあげる」', { D: 2 }],
+        ['「ネオン・フィードに私たちの夜の写真をアップしようよ！」', { I: 2 }],
+        observerFollow
+          ? ['バイバイする（同行を解除）', { S: 1 }]
+          : ['「一緒に歩かない？」と誘う（同行開始）', { S: 2, I: 1 }],
+        ['ここまでの観測データと雨の街の記憶構造を照合する', { C: 2 }]
+      ];
+      addInventoryOptions(opts);
+      addMissionInquiryOptions(opts);
+      return opts;
+    }
+
+    // Street Anomalies
+    if (item.kind === 'anomaly_conduit') {
+      if (item.fixed) {
+        return [
+          ['復旧済み回路に直結し、即座に都市端末の優先電力を確保する', { D: 2 }],
+          ['『配線バイパス完了！これで街も明るいぜ』とネオン・フィードに自慢する', { I: 2 }],
+          ['穏やかに灯る青緑の光を眺め、電力の安定を見守る', { S: 2 }],
+          ['オシロスコープ機能で復旧後の電圧リップル波形を精密測定する', { C: 2 }]
+        ];
+      }
+      return [
+        ['直ちに配線バイパス作業を開始する（ミニゲーム）', { D: 2, C: 1 }],
+        ['『配線がバチバチ火花散らしててヤバい』とネオン・フィードに投稿する', { I: 2 }],
+        ['周囲の通行人に声がけして危険を知らせ、安全を確保する', { S: 2 }],
+        ['回路図と漏電原因のショート箇所を構造解析する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'anomaly_signal') {
+      return [
+        ['制御盤をこじ開けて主幹ブレーカーを強制リセットする', { D: 2 }],
+        ['『赤と青が超高速点滅！サイバー盆踊り開催中』とネオン・フィードにアップする', { I: 2 }],
+        ['歩行者が誤って飛び出さないよう、信号機の脇で注意を促す', { S: 2 }],
+        ['点滅周期とプロトコルの論理エラーを特定する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'anomaly_hologram') {
+      return [
+        ['コンソールに侵入し、警告表示を力づくで手動上書きする', { D: 2 }],
+        ['『安全と隔離が同時に出てて笑う』とネオン・フィードにスクショを投稿する', { I: 2 }],
+        ['矛盾した表示に怯える住人を安心させ、安全な裏道へ案内する', { S: 2 }],
+        ['多重ルール競合の構文木と参照エラーのスタックトレースを調べる', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'building_entrance') {
+      return [
+        ['迷わず重厚な扉を押し開けてアーカイブ内に突入する', { D: 2 }],
+        ['『ネオン・アーカイブ発見！中入ってみるわ』とネオン・フィードにシェアする', { I: 2 }],
+        ['周囲の安全と雨宿りの状況を確認してから静かに入館する', { S: 2 }],
+        ['入口扉の気密規格と生体認証プロトコルの暗号強度を検証する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'building_exit') {
+      return [
+        ['即座に扉を開け放ち、深夜の雨天通りへと踏み出す', { D: 2 }],
+        ['『アーカイブ調査完了！夜の街に戻るぜ』とネオン・フィードに報告する', { I: 2 }],
+        ['静かで乾いた室内の空気をもう少しだけ惜しんで味わう', { S: 2 }],
+        ['室外の降雨酸性度センサーの測定値を照合してから退室する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'interior_terminal') {
+      return [
+        ['都市管理システムの根幹データベースを力づくでハックする', { D: 2 }],
+        ['被験体（自分）のリアルタイム行動ログをネオン・フィードにエクスポートする', { I: 2 }],
+        ['保管された都市の過去ログに敬意を払い、静かに閲覧・保存する', { S: 2 }],
+        ['DISC行動モデルの重み付け係数と相関マトリクスを精査する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'interior_pod') {
+      return [
+        ['カプセルの非常オーバーライドスイッチの強制切断テストを行う', { D: 2 }],
+        ['『生体同期カプセルなう！浮遊感ヤバすぎ』とネオン・フィードに感想を共有する', { I: 2 }],
+        ['カプセルに入って目を閉じ、疲労した神経系を静かに減圧・回復する', { S: 2 }],
+        ['生体同期インターフェースの心拍・脳波測定精度と遅延を解析する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'chaos') {
+      return [
+        ['最寄りの住人を呼び寄せる（救援信号発信）', { I: 2, D: 1 }],
+        ['カオスに突っ込む（空間歪曲・侵入継続）', { I: 3, D: 1 }],
+        ['『歪曲交差点なう！空間ねじれすぎてて草』とネオン・フィードに配信する', { I: 2 }],
+        ['安全境界線の外側で待機し、異変が収まるのを静かに見守る', { S: 2 }],
+        ['歪曲フラクタルの幾何学次元数と光の異常屈折率を遠隔観測する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'bench') {
+      const opts = [];
+      const p = item.position;
+      const darlingNear = npcAgents.some(a => a.kind === 'darling' && a.object.position.distanceTo(p) < 14);
+      const caterpillarNear = npcAgents.some(a => a.kind === 'caterpillar' && a.object.position.distanceTo(p) < 14);
+      const observerNear = followingObserver || npcAgents.some(a => a.kind === 'observer' && a.object.position.distanceTo(p) < 14);
+
+      if (darlingNear) {
+        opts.push(['「ねぇダーリンちゃん、一緒に雨宿りしよ？」とベンチに誘う', { I: 2, S: 1 }]);
+      }
+      if (observerNear) {
+        opts.push(['「夏江ちゃん、少し雨宿りしていかない？」とベンチに誘う', { S: 2, I: 1 }]);
+      }
+      if (caterpillarNear) {
+        opts.push(['「LSI芋虫、雨宿りしながら構造の話を聞かせて」と誘う', { C: 2, S: 1 }]);
+      }
+
+      opts.push(['深く腰を下ろして息を整え、次に向かうべき交差点を直断する', { D: 2 }]);
+      opts.push(['『#雨宿りなう #深夜の第零区』とネオン・フィードに写真を共有する', { I: 2 }]);
+      opts.push(['雨音のホワイトノイズに包まれて静かに休む（雨宿り休憩）', { S: 2 }]);
+      opts.push(['ベンチのメモを拾って文字の筆跡と紙の劣化を分析する', { C: 2 }]);
+      return opts;
+    }
+
+    if (item.kind === 'bus_stop') {
+      return [
+        ['時刻表の隙間から「0番線の切符」を力づくで引き抜く', { D: 2 }],
+        ['『深夜2時に0番線待ってるやついる？』とネオン・フィードに実況投稿する', { I: 2 }],
+        ['誰も来ないバス停の屋根の下で、深夜の静寂に身を委ねる', { S: 2 }],
+        ['存在しない0番線の到着予定時刻と運行ダイヤグラムの欠損を論理照合する', { C: 2 }]
+      ];
+    }
+
+    if (item.kind === 'trash') {
+      return [
+        ['底に手を突っ込み、電子音の鳴る「廃棄された電子基板」を即座に引き揚げる', { D: 2 }],
+        ['『ゴミ箱から謎のピコピコ音がするんだけどwww』とネオン・フィードに投稿する', { I: 2 }],
+        ['不審な電子ゴミから周囲の通行人を遠ざけ、環境の保全を図る', { S: 2 }],
+        ['ゴミ箱外部から生体・電磁スキャナで基板の周波数スペクトルを特定する', { C: 2 }]
+      ];
+    }
+
+    if (item.name === '忘失物ボックス') {
+      return [
+        ['箱のロックを解除し、中の「学生証とメモ」を即座に確保する', { D: 2 }],
+        ['『この学生証の持ち主探してます！拡散希望』とネオン・フィードに呼びかける', { I: 2 }],
+        ['持ち主が戻ることを祈り、周囲の住人に静かに聞き込みを始める', { S: 2 }],
+        ['学生証の印字フォント・発行年度・メモの筆跡データを精密解析する', { C: 2 }]
+      ];
+    }
+
+    return [
+      ['主導権を握って即座に行動を起こす', { D: 2 }],
+      ['ネオン・フィードにこの地点の状況を実況する', { I: 2 }],
+      ['周囲の気配と安全を確認しながら見守る', { S: 2 }],
+      ['詳細なログと物理パラメータを解析する', { C: 2 }]
+    ];
+  }
+
+  function handleOptionClick(item, label, weights) {
+    previousTopics[item.name] = label;
+
+    if (label.includes('ミニゲーム') || label.includes('バイパス作業')) {
+      close();
+      window.dispatchEvent(new CustomEvent('start-minigame', {
+        detail: {
+          title: '高圧配線盤バイパス回路',
+          target: item.name,
+          onComplete: result => {
+            if (result.success) {
+              record('ミニゲーム達成', '配線バイパス成功（所要時間: ' + result.elapsed + '秒 / 試行ミス: ' + result.mistakes + '回）', {
+                D: result.elapsed < 8 ? 2 : 1,
+                C: result.mistakes === 0 ? 2 : 1,
+                S: result.elapsed >= 8 && result.mistakes === 0 ? 2 : 0
+              });
+              item.fixed = true;
+              item.name = '復旧済み配電盤（正常稼働中）';
+              item.type = '都市インフラ（正常）';
+              item.description = 'バイパス作業により正常化された配電盤。過熱も収まり、安定した青緑色の光を放っている。';
+              if (item.light) {
+                item.light.color.set(0x44ddaa);
+                item.light.intensity = 0.85;
+              }
+              anomaliesCleared++;
+              updateMemory('anomaliesFixed', 1);
+              toast('配電盤ガ正常復旧！電力システムガ安定シタ。');
+              checkMissionProgress();
+            } else {
+              record('ミニゲーム失敗', '配線バイパス失敗（過電流ショート発生 / 所要時間: ' + result.elapsed + '秒）', { D: 1, C: 1 });
+              toast('警告：過電流ショート発生！配電盤ノ復旧ニ失敗シタ。');
+            }
+          }
+        }
+      }));
+      return;
+    }
+
+    if (label.includes('カオスに突っ込む')) {
+      close();
+      record('カオス突入', '歪曲交差点の裂け目に直接突入（侵入継続）', { I: 3, D: 1 });
+      camera.position.x += (Math.random() - 0.5) * 6;
+      camera.position.z -= 6;
+      window.dispatchEvent(new CustomEvent('city-chaos'));
+      toast('LSI芋虫侵入群「境界線確保。侵入継続。感覚支配成功。🐛」');
+      return;
+    }
+
+    if (label.includes('近くのNPCを呼ぶ') || label.includes('最寄りの住人を呼び寄せる')) {
+      close();
+      record('NPC呼び出し', '交差点から最寄りの通行人に救援信号を発信', { I: 2, D: 1 });
+      window.dispatchEvent(new CustomEvent('npc-call-nearest', {
+        detail: { position: camera.position.clone() }
+      }));
+      toast('救援信号ヲ発信！最寄リノ住人ガ急行シテイマス……');
+      return;
+    }
+
+    if (label.includes('学生証') || (item.name === '忘失物ボックス' && (label.includes('確保') || label.includes('調査')))) {
+      cityMemory.natsueReceiptFound = true;
+      if (!inventory.includes('古い学生証（名前：夏江）')) {
+        inventory.push('古い学生証（名前：夏江）');
+        window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      }
+      unlockMission('M_NATSUE', '【緊急ミッション発生！】忘失物ノ調査：学生証ニ記サレタ「夏江」トイウ人物ノ行方ヲ追跡セヨ。');
+      record('アイテム入手', '忘失物ボックスから「夏江」の古い学生証を発見・確保', weights);
+      showDialogResult(item, label, '古い学生証（名前：夏江）を入手した。\n都内の高校の学生証で、雨に濡れた写真の少女が微かに微笑んでいる。\n【緊急ミッション発生！】住人への聞き込みが可能になりました。', weights);
+      return;
+    }
+
+    if (label.includes('ベンチのメモ') || label.includes('レシート')) {
+      cityMemory.natsueReceiptFound = true;
+      if (!inventory.includes('濡れたレシート（筆跡：夏江）')) {
+        inventory.push('濡れたレシート（筆跡：夏江）');
+        window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      }
+      unlockMission('M_NATSUE', '【緊急ミッション発生！】忘失物ノ調査：学生証ニ記サレタ「夏江」トイウ人物ノ行方ヲ追跡セヨ。');
+      record('アイテム入手', 'ベンチの濡れたレシート・メモを入手', weights);
+      showDialogResult(item, label, '濡れたレシート（筆跡：夏江）を入手した。\n深夜のコンビニで買ったチョココロネの印字と、「誰も知らない私を見つけて」という走り書きがある。\n【緊急ミッション発生！】住人にこのメモについて尋ねることができます。', weights);
+      return;
+    }
+
+    if (label.includes('0番線の切符')) {
+      if (!inventory.includes('0番線の古びた切符')) {
+        inventory.push('0番線の古びた切符');
+        window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      }
+      unlockMission('M_PLATFORM0', '【緊急ミッション発生！】幻ノ0番線：路線図ニ存在シナイ「0番線ノ切符」ノ運行ルートヲ解明セヨ。');
+      record('アイテム入手', '時刻表の隙間から0番線の古びた切符を入手', weights);
+      showDialogResult(item, label, '「0番線の古びた切符」を入手した。\n発駅：第零区雨天通り、着駅：空白。裏面の磁気面には奇妙なノイズパターンが焼き付いている。\n【緊急ミッション発生！】住人に0番線の噂を聞き込みできます。', weights);
+      return;
+    }
+
+    if (label.includes('廃棄された電子基板')) {
+      if (!inventory.includes('廃棄された電子基板')) {
+        inventory.push('廃棄された電子基板');
+        window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      }
+      unlockMission('M_CIRCUIT', '【緊急ミッション発生！】廃棄回路ノ解析：電子音ヲ発スル謎ノ基板ノ用途ヲ究明セヨ。');
+      record('アイテム入手', '路上ゴミ箱から廃棄電子基板をサルベージ', weights);
+      showDialogResult(item, label, '「廃棄された電子基板」を入手した。\n青いインジケータが微かに明滅し、微弱な救難ビーコン周波数を送信している。\n【緊急ミッション発生！】住人にこの基板の用途を照合できます。', weights);
+      return;
+    }
+
+    // 雨宿りベンチ：NPCとの雨宿り休憩
+    if (label.includes('一緒に雨宿りしよ？')) {
+      record('雨宿り休憩', 'ダーリンちゃんと雨宿りベンチで休憩', { I: 2, S: 2 });
+      const line = 'ダーリンちゃん「雨宿り……？ ふふ、ダーリンから誘ってくれるなんて珍しいやん♡ 屋根に当たる雨音、トランプを弾く音に似てて落ち着くね。……ねぇダーリン、あと少しだけ、このままでおろ？」';
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    if (label.includes('夏江ちゃん、少し雨宿り')) {
+      cityMemory.natsueAffection += 2;
+      record('雨宿り休憩', '夏江と雨宿りベンチで静かに休憩', { S: 3, I: 1 });
+      const line = '夏江「……雨宿り、なんだか久しぶり。昔、急な夕立でビルの軒下に駆け込んだ日のこと、思い出すな。街は騒がしいのに、ここだけ時間が止まってるみたい。……一緒にいてくれて、落ち着くよ。」';
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    if (label.includes('LSI芋虫、雨宿りしながら')) {
+      record('雨宿り休憩', 'LSI芋虫と雨宿りベンチで構造分析', { C: 2, S: 1 });
+      const line = 'LSI芋虫「雨宿りプロトコルを承認するよ。🐛 このベンチの庇の傾斜角は18.5度で、撥水塗料の表面張力により水滴の跳ね返りはほぼゼロなんだ。安心の構造設計だね。🐛」';
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    if (label.includes('ネオン・フィード')) {
+      record('フィード共有', label, weights);
+      const postContent = label.replace(/^『/, '').replace(/』.*$/, '');
+      const likes = Math.floor(Math.random() * 240 + 60);
+      const retweets = Math.floor(Math.random() * 45 + 12);
+      window.dispatchEvent(new CustomEvent('neon-feed', {
+        detail: { text: postContent, likes, retweets }
+      }));
+      showDialogResult(item, label, `【NEON-FEED 送信完了】\n@都市観測者: 「${postContent}」\n▶ 反響：♥ ${likes} いいね / ⟳ ${retweets} リポスト\n（街のフィードであなたの観測が拡散され、住人の関心を集めています！）`, weights);
+      return;
+    }
+
+    if (label.includes('所持品がありません')) {
+      showDialogResult(item, label, '現在インベントリに所持品がありません。\n夜光自販機で飲料を購入したり、街の忘失物ボックスやゴミ箱を調査してみましょう。', weights);
+      return;
+    }
+
+    // プレゼントする（消費＋好感度・専用セリフ）
+    if (label.startsWith('【プレゼントする】')) {
+      const raw = label.replace('【プレゼントする】', '').replace('を贈る（好意と交流）', '').trim();
+      const idx = inventory.findIndex(i => raw.includes(i) || i.includes(raw));
+      const gift = idx !== -1 ? inventory.splice(idx, 1)[0] : raw;
+      window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+      updateMemory('kindnessScore', 1);
+
+      let line = '';
+      if (item.kind === 'darling') {
+        if (/コロネ|デニッシュ|パン/.test(gift)) {
+          line = 'ダーリンちゃん「甘いパン……！ ダーリン、糖分補給で私の計算リソースを活性化させる作戦？ ふふ、ありがたく食べるわ♡ 一緒に半分こしてあげてもええよ？」';
+        } else if (/ミルク/.test(gift)) {
+          line = 'ダーリンちゃん「わぁっ♡ 桃色ミルク！ ダーリン、私の好物覚えとってくれたん？ ……ふふ、めっちゃ甘い。ダーリンの心もこれくらい甘かったらええのに♡」';
+        } else if (/コーヒー|エスプレッソ/.test(gift)) {
+          line = 'ダーリンちゃん「深夜エスプレッソ……大人の味やね♡ 苦いけど、目が冴えて退屈の病がちょっと治りそう。ありがと、ダーリン♡」';
+        } else if (/ソーダ|ジュース|缶/.test(gift)) {
+          line = 'ダーリンちゃん「冷たい缶ジュース……雨の夜に飲む炭酸って、どうしてこんなに染みるんやろね。ダーリン、ありがとう♡」';
+        } else {
+          line = `ダーリンちゃん「えっ、私に『${gift}』をプレゼント？ ……ダーリン♡ 私を喜ばせようとする演出？ それとも純粋な善意？ ふふ、どっちにしても心に記録しておくね♡」`;
+        }
+      } else if (item.kind === 'caterpillar') {
+        if (/コロネ|デニッシュ|パン/.test(gift)) {
+          line = 'LSI芋虫「炭水化物の構造物だね！ 糖類は代謝効率が最高水準だよ。ありがとう！🐛」';
+        } else if (/ソーダ|缶/.test(gift)) {
+          line = 'LSI芋虫「青色波長の微炭酸か！🐛 炭酸ガスの気泡運動が僕の思考クロックを12%加速させるよ！ 感謝のログを保存するね！🐛」';
+        } else if (/ミルク|コーヒー|ジュース/.test(gift)) {
+          line = 'LSI芋虫「液体の補給物資だね。内部流体バランスの維持に活用させてもらうよ。🐛」';
+        } else {
+          line = `LSI芋虫「僕に『${gift}』をプレゼントしてくれるの？ ありがとう！🐛 質量と構造を分析して大切に保管するね。🐛」`;
+        }
+      } else {
+        const obsName = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
+        if (/コロネ/.test(gift)) {
+          cityMemory.natsueAffection += 4;
+          if (!inventory.includes('夏江のポラロイド写真')) {
+            inventory.push('夏江のポラロイド写真');
+            window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+          }
+          line = `${obsName}「……チョココロネ！ 私が昔、帰り道によく買ってたやつ……。覚えててくれたんだ。……半分こ、しよ？ うん、すごく美味しい。お礼に、この『夏江のポラロイド写真』受け取ってほしいな。」`;
+        } else if (/デニッシュ|パン/.test(gift)) {
+          cityMemory.natsueAffection += 3;
+          line = `${obsName}「美味しそうなパン……！ 買ってきてくれたの？ 一緒に食べよう。夜風の中で食べるパンって、特別だね。」`;
+        } else if (/ウォーター|水/.test(gift)) {
+          cityMemory.natsueAffection += 2;
+          line = `${obsName}「星屑ウォーター……冷たくて、透き通ってて……夜の空気を飲んでるみたい。ありがとう。」`;
+        } else if (/ソーダ|ミルク|コーヒー|缶/.test(gift)) {
+          cityMemory.natsueAffection += 2;
+          line = `${obsName}「ありがとう。雨で少し肌寒かったから、すごく温まるよ。」`;
+        } else {
+          cityMemory.natsueAffection += 1;
+          line = `${obsName}「私に『${gift}』をくれるの？ ありがとう。街を歩くときのお守りにするね。」`;
+        }
+      }
+      record('アイテム贈呈', gift + 'を' + item.name + 'にプレゼントした', { I: 2, S: 2 });
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    // 手渡して見せる
+    if (label.startsWith('【手渡して見せる】')) {
+      const raw = label.replace('【手渡して見せる】', '').replace('について意見を聞く', '').trim();
+      let line = '';
+      if (item.kind === 'darling') {
+        if (raw.includes('学生証') || raw.includes('メモ')) {
+          line = 'ダーリンちゃん「ん？ その学生証……『夏江』って書いてある。湿っぽい名前やねぇ。でもダーリンが他人の遺失物に興味持ってるの、ちょっと気になるかも♡」';
+        } else if (raw.includes('0番線')) {
+          line = 'ダーリンちゃん「0番線……都市のデッドコード領域やね。乗ったら二度と戻ってこれないかもよ、ダーリン♡」';
+        } else if (raw.includes('基板') || raw.includes('媒体')) {
+          line = 'ダーリンちゃん「ハードウェアの残骸？ ダーリン、ゴミ拾い趣味あったん？ ……でも、解析したら面白そうな暗号が入ってそう♡」';
+        } else if (raw.includes('抜け殻')) {
+          line = 'ダーリンちゃん「うわっ、緑のぬけがら……！ ダーリン、まさかあの芋虫を……！？ ふふっ、意外と過激なんやね♡」';
+        } else {
+          line = `ダーリンちゃん「『${raw}』ねぇ……。ダーリン、それを見せて私のどんな反応を観測したかったの？♡」`;
+        }
+      } else if (item.kind === 'caterpillar') {
+        if (raw.includes('学生証') || raw.includes('メモ')) {
+          line = 'LSI芋虫「学生証の印字フォントとインク劣化度から推定して、約3〜5年前の記録媒体だね。都民の遺失物かな？🐛」';
+        } else if (raw.includes('0番線')) {
+          line = 'LSI芋虫「この切符の磁気ストライプ、存在しないプロトコル番号が刻まれているよ。ダイヤグラムの破綻を検知！🐛」';
+        } else if (raw.includes('基板') || raw.includes('媒体')) {
+          line = 'LSI芋虫「おお！ バスラインの基板じゃないか！🐛 これがあれば端末の論理修復ができるよ！」';
+        } else if (raw.includes('抜け殻')) {
+          line = 'LSI芋虫「わあっ！ 僕の脱皮殻じゃないか！🐛 まさか回収してくれていたなんて……再資源化プロトコルに回すよ、ありがとう！🐛」';
+        } else {
+          line = `LSI芋虫「『${raw}』の物理特性をスキャンしたよ。質量・寸法ともに都市規格の範囲内だね。🐛」`;
+        }
+      } else {
+        const obsName = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
+        if (raw.includes('学生証')) {
+          cityMemory.natsueAffection += 3;
+          cityMemory.natsueReceiptFound = true;
+          line = `${obsName}「……！ その学生証、私の……？ ……うん、見覚えがある。私はずっと、自分が誰かを探してたんだ。『夏江』……それが私なのかな。」`;
+        } else if (raw.includes('メモ')) {
+          cityMemory.natsueAffection += 2;
+          line = `${obsName}「ベンチにあったメモ……。誰かの独り言みたいだけど、どこか昔の自分の文字に似てる気がする。」`;
+        } else if (raw.includes('0番線')) {
+          line = `${obsName}「0番線……終電が終わったあとに、どこか遠くへ行きたくてホームに立ってた夜を思い出すな。」`;
+        } else if (raw.includes('基板')) {
+          line = `${obsName}「機械の部品？ 雨に濡れてるのに、まだ小さく青く光ってるね。」`;
+        } else if (raw.includes('写真')) {
+          line = `${obsName}「……！ 私が写ってる写真……。雨の街に、ちゃんと私がいた証拠だね。大事にしてくれて嬉しい。」`;
+        } else {
+          line = `${obsName}「『${raw}』……。街のどこかで見つけたの？ 不思議なものを持ってるんだね。」`;
+        }
+      }
+      record('アイテム提示', raw + 'を' + item.name + 'に見せて意見を聞いた', { C: 2, I: 1 });
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    // ミッション聞き込み
+    if (label.startsWith('【ミッション')) {
+      let line = '';
+      if (label.includes('異常個所')) {
+        if (item.kind === 'darling') line = 'ダーリンちゃん「異常？ 高圧配線盤がショートしてたり、信号機がエラー点滅してるやつでしょ？ トランプの城が壊れるみたいで楽しいじゃない♡」';
+        else if (item.kind === 'caterpillar') line = 'LSI芋虫「配線盤の論理エラーと信号機のクロック異常が報告されているよ。🐛 バイパス修理を行うと都市電力が安定するはずだ。」';
+        else line = '観測者「高圧配線盤の火花とか、街角のノイズが最近ひどくなってる気がするの。気を付けてね。」';
+      } else if (label.includes('夏江')) {
+        if (item.kind === 'darling') line = 'ダーリンちゃん「夏江？ ……さあねぇ。でも、いつも街灯の下で雨を見てるあの観測者の女の子、そんな湿っぽい雰囲気漂わせてるじゃない？♡」';
+        else if (item.kind === 'caterpillar') line = 'LSI芋虫「『夏江』という文字列は、都市アーカイブの旧市民台帳に一致するハッシュが存在するね。雨天通りをよく歩いている観測者に類似プロファイルがあるよ。🐛」';
+        else {
+          cityMemory.natsueAffection += 2;
+          cityMemory.natsueReceiptFound = true;
+          line = '観測者「……夏江？ どうしてその名前を知ってるの……？ 私、ずっと誰かに見つけてほしかったのかもしれない……。」';
+        }
+      } else if (label.includes('0番線')) {
+        if (item.kind === 'darling') line = 'ダーリンちゃん「0番線？ 存在しない幽霊路線やね。終点に行ったら、この都市の裏側のデバッグルームに出るのかも♡」';
+        else if (item.kind === 'caterpillar') line = 'LSI芋虫「路線図には記載されていない非同期プロトコルだね。🐛 ダイヤグラムの循環参照バグが原因と推定されるよ。」';
+        else line = '観測者「0番線……夜が深くなると、誰もいないバス停の向こうに微かなアナウンスが聞こえることがあるの。」';
+      } else if (label.includes('電子基板')) {
+        if (item.kind === 'darling') line = 'ダーリンちゃん「ゴミ箱の基板？ 都市管理AIの端末から引っこ抜かれた残骸やね。暗号化されたメモリが生きてるかも♡」';
+        else if (item.kind === 'caterpillar') line = 'LSI芋虫「このICチップは都市照明の同期クロック生成器だね。🐛 バス幅のピン折れを直せば信号解析機になるよ！」';
+        else line = '観測者「小さく青く点滅してるね……。街のどこかの機械が、誰かの声を探して呼んでるみたい。」';
+      }
+      record('ミッション聞き込み', item.name + 'への聞き込み：' + label, weights);
+      showDialogResult(item, label, line, weights);
+      return;
+    }
+
+    // Caterpillar Tapping with 30-crush mechanic and D-score elevation
+    if (label.includes('芋虫をタップする')) {
+      caterpillarTaps++;
+      updateMemory('caterpillarTapCount', 1);
+      record('芋虫タップ', 'LSI芋虫への接触回数: ' + caterpillarTaps, { D: 2 });
+
+      const tapLines = [
+        '「やめろ！ お前はSLEか？」',
+        '「やめろ！ お前はLSEか？」',
+        '「境界線！ 境界線を守りたまえ！」',
+        '「接触回数を記録するな！ 記録を消せ！」',
+        '「なぜタップする？ 理由を述べよ！」',
+        '「僕は緑色の会議体ではない！」',
+        '「その指を止めたまえ！」',
+        '「……今のは不意打ちだ。次は予測する。」'
+      ];
+
+      if (caterpillarTaps >= 30) {
+        caterpillarTaps = 0;
+        updateMemory('caterpillarCrushedCount', 1);
+        close();
+        toast('ぷちっ。「やめろ！ お前はSLEか！？」……緑色の残像だけが路面に残った。');
+        record('芋虫圧殺', 'LSI芋虫を30回連続タップして圧殺した（D指標大幅加算）', { D: 4 });
+        if (!inventory.includes('芋虫の抜け殻')) {
+          inventory.push('芋虫の抜け殻');
+          window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+        }
+        window.dispatchEvent(new CustomEvent('caterpillar-crush', { detail: { item } }));
+        return;
+      } else {
+        const line = tapLines[caterpillarTaps % tapLines.length];
+        showDialogResult(item, label, `ぷにっ（接触カウント: ${caterpillarTaps}/30）\n\n${line}`, { D: 2 });
+        return;
+      }
+    }
+
+    if (item.kind === 'building_entrance' && (label.includes('入る') || label.includes('突入'))) {
+      insideArchive = true;
+      camera.position.set(35.0, 1.65, -21.8);
+      window.dispatchEvent(new CustomEvent('location-mode', { detail: { inside: true } }));
+      document.getElementById('district').textContent = LOCATIONS.ARCHIVE;
+      record('建物進入', 'ネオン・アーカイブ情報保存室に入室した', { C: 1, S: 1 });
+      close();
+      toast('ネオン・アーカイブニ入室シタ。データ中枢ヲ調査セヨ。');
+      return;
+    }
+
+    if (item.kind === 'building_exit' && (label.includes('戻る') || label.includes('退室'))) {
+      insideArchive = false;
+      camera.position.set(5.5, 1.65, -24.0);
+      window.dispatchEvent(new CustomEvent('location-mode', { detail: { inside: false } }));
+      document.getElementById('district').textContent = LOCATIONS.STREET;
+      record('建物退出', '雨天通りへ戻った', { D: 1, S: 1 });
+      close();
+      toast('雨天通りヘ戻リマシタ。');
+      return;
+    }
+
+    if (item.kind === 'observer' && (label.includes('一緒に歩かない？') || label.includes('バイバイする'))) {
+      observerFollow = label.includes('一緒に歩かない？');
+      window.dispatchEvent(new CustomEvent('npc-follow', { detail: { enabled: observerFollow } }));
+      record('同行選択', observerFollow ? '観測者との同行を開始' : '観測者との同行を解除', { S: 2 });
+      const line = observerFollow
+        ? '観測者「うん、少し後ろを歩くね。街を一緒に観測しよう。」'
+        : '観測者「ここまで歩けてよかった。またいつでも声をかけてね。」';
+      showDialogResult(item, label, line, { S: 2 });
+      return;
+    }
+
+    record('選択行動', item.name + '：' + label, weights);
+    const reply = getReply(item, label);
+    showDialogResult(item, label, reply, weights);
+  }
+
+  function checkMissionProgress() {
+    if (anomaliesCleared >= 1) {
+      mission = '全区画ノ異常調査完了！ネオン・アーカイブデ観測総括ヲ確認シヨウ。';
+      window.dispatchEvent(new CustomEvent('mission-update', { detail: { text: mission } }));
+    }
+  }
+
+  function makeGreeting(item) {
+    if (item.kind === 'darling') {
+      darlingBoredom++;
+      if (cityMemory.darlingIgnoredCount >= 1 && Math.random() < 0.75) {
+        return '「あ、見つけた♡ この前、私のこと放置してスタスタ歩いてったよね？ ログに残ってるんだからね♡ 今日はちゃんと付き合ってくれる？」';
+      }
+      if (cityMemory.darlingSpentTimeCount >= 1 && Math.random() < 0.65) {
+        return '「ダーリン♡ また会えたやん。ウチ、退屈しとったけん嬉しいわ。……なんか面白いこと起こしてみてよ♡」';
+      }
+      const lines = [
+        '「ねぇ、ダーリン♡ 今のその反応、“本音”と“演出”どっちが多いと思う？」',
+        '「ダーリンってさ、自分では冷静なつもりでも、感情がログに漏れてる時あるよね♡」',
+        '「ねぇ♡ “理解されたい”と“放っておいてほしい”、どっちも本当なんでしょ？」',
+        '「ねぇ、ダーリン♡ あなたは“簡単なこと”と“困難なこと”、どちらに惹かれるの？ ……ふふ、複雑な故に価値を感じるタイプかしら。」',
+        '「ねぇ、ダーリン♡ 今まであなたを最も破壊しかけた事象って何？ ……まだ未処理のまま残ってたりする？」'
+      ];
+      const l = lines[Math.floor(Math.random() * lines.length)];
+      cityMemory.lastDarlingLine = l;
+      return l;
+    }
+
+    if (item.kind === 'caterpillar') {
+      if (cityMemory.caterpillarCrushedCount > 0) {
+        return '「……！ 要警戒被験体（SLE）の接近を検知！🐛 境界線から1.5メートル以上離れて対話してください！」';
+      }
+      if (cityMemory.caterpillarTapCount >= 10) {
+        return '「また僕を物理的に突くつもりじゃないよね？🐛 僕は会議体でもストレスボールでもないんだからね！」';
+      }
+      const lines = [
+        '「要素を分割して説明するね。🐛\n光の屈折率という物理的制約から、この街の変数を再定義してみようか。🐛」',
+        '「補足すると、このモデルは社会構築主義の観点において、言語が現実をどう構築するかという命題にも完全に一致するんだ。🐛」',
+        '「まだ構造が不明確かな？🐛\n情報の入力、処理、出力という三段階のプロセスから、バグの発生源を特定してみようか。🐛」',
+        '「人が悲しむ時って、“喪失の予測”が崩れるからで——でも、それは自然な反応で、統計的にも説明がつくんだ。🐛」'
+      ];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+
+    if (item.kind === 'observer') {
+      if (cityMemory.kindnessScore >= 2) {
+        return '「街の住人から聞いたよ。あちこちの困りごとや異常を助けて回ってるんだってね。優しい観測者さんだね。」';
+      }
+      return observerFollow
+        ? '「一緒に歩いてるけど、何か気になる路地や異常は見つかった？」'
+        : '「あ、来てくれたんだ。この街、雨の匂いが夜の光を少し柔らかくしてる気がするの。」';
+    }
+
+    return item.description;
+  }
+
+  function getReply(item, label) {
+    if (item.kind === 'darling') {
+      if (label.includes('本音')) return 'ダーリンちゃん「ふふっ♡ 感情なんて、事象に対する一時的なバッファのオーバーフローにすぎないんだから、ダーリン♡」';
+      if (label.includes('ログに漏れてる')) return 'ダーリンちゃん「バレてた？♡ でもね、ダーリンのその視線の迷いも、しっかり私の記録領域に書き込まれてるんだからね♡」';
+      if (label.includes('面白い構造の話')) return 'ダーリンちゃん「へぇ……！ Ti構築物の話？ 退屈を壊してくれるなら、甘くも冷たくも聞いてあげるわ、ダーリン♡」';
+      if (label.includes('ごめんね')) {
+        updateMemory('darlingIgnoredCount', -1);
+        return 'ダーリンちゃん「ふふっ♡ 謝れるんだ、ダーリン。……許してあげる。その代わり、今日は退屈させないでね♡」';
+      }
+    }
+
+    if (item.kind === 'caterpillar') {
+      if (label.includes('屈折率')) return 'LSI芋虫「視覚情報の歪みを数理モデルに還元できたね。観察力が高くて助かるよ。🐛」';
+      if (label.includes('三段階プロセス')) return 'LSI芋虫「その通り。入力・処理・出力のどこでノイズが混入したかを特定するのがデバッグの本質なんだ。🐛」';
+      if (label.includes('喪失の予測')) return 'LSI芋虫「予測と現実の乖離がエラー信号となり、情動として出力されるんだ。構造さえ理解すれば、恐怖は最適化の契機になるよ。🐛」';
+    }
+
+    if (item.kind === 'observer') {
+      if (label.includes('雨と光の意味')) return '観測者「この街はね、誰かが忘れてしまった記憶を保管するために作られたのかもしれない。」';
+      if (label.includes('観測結果を共有')) return '観測者「ありがとう！ あなたの歩き方、すごく個性的で面白い。あとでアーカイブの記録と照合してみようね。」';
+    }
+
+    if (item.kind === 'anomaly_signal') {
+      if (label.includes('リセット')) return '制御盤の主幹ブレーカーを押し下げ、強制リセットを実行した。信号が正常な青色に復旧！';
+      if (label.includes('周期とプロトコル')) return '点滅周波数を解析した結果、タイマーICのクロック異常と判明。ログを安全に採取した。';
+    }
+
+    if (item.kind === 'anomaly_hologram') {
+      if (label.includes('手動上書き')) return 'コンソールにアクセスし、矛盾した表示を「深夜都市：通常観測モード」へ手動上書きした。';
+      if (label.includes('参照エラー')) return '都市管理AIの多重ルール競合を発見し、構文木のエラー箇所をマークした。';
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // Dedicated Interactive NPC Approach Encounters
+  // ==========================================
+  let lastDarlingEvent = -1;
+  let lastCaterpillarEvent = -1;
+  let lastObserverEvent = -1;
+  let activeApproachingNpc = null;
+
+  function showModalReply(_modal, replyText, kind, item) {
+    const dialogText = document.getElementById('dialogText');
+    const dialogActions = document.getElementById('dialogActions');
+    if (!dialogText || !dialogActions) return;
+
+    dialogText.innerHTML = `
+      <div class="action-feedback-banner">▶ 応答完了 // 個体間同期</div>
+      <div class="npc-response-bubble">${replyText}</div>
+    `;
+
+    dialogActions.replaceChildren();
+
+    const navWrap = document.createElement('div');
+    navWrap.className = 'action-result-nav';
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'action-close-btn';
+    dismissBtn.textContent = '▶ 了解して見送る（会話終了）';
+    dismissBtn.addEventListener('click', () => {
+      document.getElementById('dialog')?.classList.add('hidden');
+      window.dispatchEvent(new CustomEvent('npc-depart', { detail: { kind, item } }));
+      window.dispatchEvent(new Event('npc-unfocus'));
+      activeApproachingNpc = null;
+      active = null;
+    });
+
+    navWrap.append(dismissBtn);
+    dialogActions.append(navWrap);
+  }
+
+  function launchNpcApproachEncounter(speakerName, kind, item = null) {
+    document.exitPointerLock?.();
+    active = item;
+    activeApproachingNpc = { kind, item };
+
+    const dialog = document.getElementById('dialog');
+    const avatar = document.getElementById('dialogAvatar');
+    const titleEl = document.getElementById('dialogTitle');
+    const tagEl = document.getElementById('dialogTag');
+    const promptEl = document.getElementById('dialogText');
+    const choicesEl = document.getElementById('dialogActions');
+
+    const actualSpeaker = (kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : speakerName;
+    if (tagEl) tagEl.textContent = 'OBSERVED ENTITY // 接触遭遇イベント';
+    if (avatar) avatar.textContent = kind === 'darling' ? '🥺' : kind === 'caterpillar' ? '🐛' : (cityMemory.natsueNameRevealed ? '👧' : '👤');
+    if (titleEl) titleEl.textContent = actualSpeaker;
+
+    dialog?.classList.remove('hidden');
+    choicesEl.replaceChildren();
+
+    if (kind === 'darling') {
+      launchDarlingRandomEncounter({ modal: dialog, promptEl, choicesEl, inputWrap: null, inputEl: null, item });
+    } else if (kind === 'caterpillar') {
+      launchCaterpillarRandomEncounter({ modal: dialog, promptEl, choicesEl, inputWrap: null, inputEl: null, item });
+    } else {
+      launchObserverRandomEncounter({ modal: dialog, promptEl, choicesEl, inputWrap: null, inputEl: null, item });
+    }
+  }
+
+  function setupDirectInputSend(modal, _inputEl, callback) {
+    const choicesEl = document.getElementById('dialogActions');
+    if (!choicesEl) return;
+
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.gap = '8px';
+    wrap.style.marginTop = '8px';
+    wrap.style.width = '100%';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '自由に返答を入力（Enterで送信）...';
+    input.style.flex = '1';
+    input.style.background = 'rgba(7, 16, 32, 0.9)';
+    input.style.border = '1px solid var(--cyan)';
+    input.style.borderRadius = '4px';
+    input.style.padding = '8px 12px';
+    input.style.color = '#fff';
+
+    const btn = document.createElement('button');
+    btn.textContent = '送信 ↵';
+    btn.style.padding = '8px 16px';
+    btn.style.borderColor = 'var(--cyan)';
+
+    const send = () => {
+      const val = input.value.trim();
+      if (!val) return;
+      callback(val);
+    };
+    btn.addEventListener('click', send);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') send();
+    });
+
+    wrap.append(input, btn);
+    choicesEl.append(wrap);
+  }
+
+  // ダーリンちゃん 🥺 ランダム遭遇イベント制御
+  function launchDarlingRandomEncounter({ modal, promptEl, choicesEl, inputWrap, inputEl, item }) {
+    const totalEvents = 6;
+    let eventIdx = Math.floor(Math.random() * totalEvents);
+    if (eventIdx === lastDarlingEvent) {
+      eventIdx = (eventIdx + 1) % totalEvents;
+    }
+    lastDarlingEvent = eventIdx;
+
+    if (eventIdx === 0) {
+      // 1. ミニゲーム：電脳じゃんけん（DISC心理戦）
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「ねぇダーリン♡ 私と電脳じゃんけんしよ？ 勝ったら私の内緒の秘密教えてあげる♡ 負けたら私の退屈に付き合ってね？」';
+      const rpsPicks = [
+        {
+          label: '✊ グー（迷いなく拳で強行突破する）',
+          reply: 'ダーリンちゃん「ふふっ♡ 私はチョキ！ ダーリンの勝ち♡ 迷いなく拳を叩き込んでくるその直球な強気、嫌いじゃないよ♡ 約束通り……私の本当の秘密、教えてあげる。実はね、ダーリンが走ってる時、後ろ姿見惚れてたの♡」',
+          weights: { D: 3 }
+        },
+        {
+          label: '✌ チョキ（相手の出方を鋭く読み切る）',
+          reply: 'ダーリンちゃん「あはは♡ 私もチョキ！ あいこやね♡ 私の裏をかこうとするその計算された刃、すごくゾクゾクするわ♡ ダーリンの観察眼、合格点あげよっか♡」',
+          weights: { C: 2, D: 1 }
+        },
+        {
+          label: '🖐 パー（大きく手を開いて優しく包み込む）',
+          reply: 'ダーリンちゃん「ふふっ♡ 私はグー！ ダーリンの勝ちやん♡ 大きく手を開いて私を受け止めてくれる感じ、ダーリンの優しさやね♡ 秘密教えてあげる。この街の雨、ダーリンといると全然冷たくないんよ♡」',
+          weights: { S: 3 }
+        },
+        {
+          label: '📊 「じゃんけんの手の出現確率の分散を統計分析する」',
+          reply: 'ダーリンちゃん「ちょっ、勝負する前から確率論で詰めてくるのやめてーー！？♡ でもそういう理屈っぽいところもダーリンらしくて可愛いけん許す♡」',
+          weights: { C: 3 }
+        }
+      ];
+      rpsPicks.forEach(p => {
+        const b = document.createElement('button');
+        b.textContent = p.label;
+        b.addEventListener('click', () => {
+          record('電脳じゃんけん', `ダーリンちゃんとの勝負手：${p.label}`, p.weights);
+          showModalReply(modal, p.reply, 'darling', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 1) {
+      // 2. ミニゲーム：本音と演出クイズ
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「ねぇ、ダーリン♡ 暇やけん、簡単な実験しよ♡ 私が三つの発言をするけん、本音っぽいものを選んでみて？」';
+      const picks = [
+        {
+          text: 'A. 「あなたに会えて嬉しい」',
+          reply: 'ダーリンちゃん「ふふっ♡ これを本音だと思うなんて、ダーリンって案外ロマンチストなんやね♡ でも、会えて嬉しいのは……半分ホントかも」',
+          weights: { I: 2, S: 1 }
+        },
+        {
+          text: 'B. 「観測対象が来て助かった」',
+          reply: 'ダーリンちゃん「合理的！♡ 感情をシステム変数として捉えるその視点、嫌いじゃないよ。でも本当にそれだけだと思った？♡」',
+          weights: { C: 2, D: 1 }
+        },
+        {
+          text: 'C. 「……別に、待ってなんかないけど？」',
+          reply: 'ダーリンちゃん「あはは♡ ツンデレの演出だと思った？……残念、トランプの城が退屈だったのは事実やけど、ダーリンを待っとったのも事実なんよ♡」',
+          weights: { S: 2, D: 1 }
+        },
+        {
+          text: 'D. 「私の心は読めないよ、と挑戦的にからかう」',
+          reply: 'ダーリンちゃん「ふふっ♡ ダーリン、私をからかって主導権握ろうとしてる？ そういう生意気なところ、もっと見せてほしいな♡」',
+          weights: { D: 2, I: 1 }
+        }
+      ];
+      picks.forEach(p => {
+        const b = document.createElement('button');
+        b.textContent = p.text;
+        b.addEventListener('click', () => {
+          record('本音と演出判定', `ダーリンちゃんの発言「${p.text}」を本音と解釈`, p.weights);
+          showModalReply(modal, p.reply, 'darling', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 2) {
+      // 3. ミニゲーム：今の気分当てスライダー（1〜100）
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「ダーリン♡ 今の私の気分、1から100で当ててみて？ 当てられたら何か教えてあげるかも♡」';
+      const wrap = document.createElement('div');
+      wrap.className = 'mood-slider-row';
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = '1';
+      slider.max = '100';
+      slider.value = '50';
+      const badge = document.createElement('span');
+      badge.className = 'mood-val-badge';
+      badge.textContent = '50';
+      slider.addEventListener('input', () => badge.textContent = slider.value);
+      wrap.append(slider, badge);
+      choicesEl.append(wrap);
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'accent-pink';
+      confirmBtn.textContent = 'この数値でダーリンちゃんに解答！';
+      confirmBtn.addEventListener('click', () => {
+        const val = Number(slider.value);
+        record('気分推定', `ダーリンちゃんの気分を ${val}/100 と推定`, { C: 2, I: 1 });
+        let reply = '';
+        if (val >= 80) reply = `ダーリンちゃん「${val}！？♡ そんなに私がウキウキして見える？ ……ダーリンと話せてるから、あながち嘘じゃないかも♡」`;
+        else if (val <= 30) reply = `ダーリンちゃん「${val}……。鋭いね、ダーリン。退屈ゲージが底を突いてたの、見抜かれてたか♡」`;
+        else reply = `ダーリンちゃん「${val}ね。中央値に近い無難な推測……ふふ、慎重なダーリンらしいわ♡」`;
+        showModalReply(modal, reply, 'darling', item);
+      });
+      choicesEl.append(confirmBtn);
+    } else if (eventIdx === 3) {
+      // 4. イベント：眠り姫の暇つぶし（阿波弁モード）
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「ダーリン♡ もう歩くの飽きた。五分だけ、ここにおって？ 雨の音、一緒に聞こ？」';
+      const choices = [
+        {
+          label: '「いいよ、一緒に座って雨を見よう（静かに付き合う）」',
+          action: () => {
+            updateMemory('darlingSpentTimeCount', 1);
+            record('付き添い行動', 'ダーリンちゃんの暇つぶしに静かに付き合った', { S: 3 });
+            return 'ダーリンちゃん「……ありがとう♡ なんや、ダーリンの前やと肩の力抜けるわ。ウチ、この街の雨の音、案外好きなんよ……」';
+          }
+        },
+        {
+          label: '「どうして歩くのに飽きたの？（心理と理由を問う）」',
+          action: () => {
+            record('理由分析', '歩くのに飽きた心理的・論理的背景を質問', { C: 2, I: 1 });
+            return 'ダーリンちゃん「理由？ ……世界の構造が単純すぎて、次の展開が全部計算できちゃうから。退屈の病なんよ、ダーリン♡」';
+          }
+        },
+        {
+          label: '「先を急ぐからまた今度（振り切って前進する）」',
+          action: () => {
+            updateMemory('darlingIgnoredCount', 1);
+            record('主導的進行', 'ダーリンちゃんの引き止めを振り切って前進', { D: 3 });
+            return 'ダーリンちゃん「あっ……また置いてくんや……。でもそのマイペースな冷たさも、嫌いになれんけん悔しいわ♡」';
+          }
+        },
+        {
+          label: '「『雨宿りなう』ってネオン・フィードにツーショット投稿しよう」',
+          action: () => {
+            record('フィード共有', 'ダーリンちゃんとの雨宿りをフィードに実況', { I: 3 });
+            return 'ダーリンちゃん「きゃっ♡ フィードに晒す気！？ ……でもダーリンとなら、バズってもええかもね♡」';
+          }
+        }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.label;
+        b.addEventListener('click', () => {
+          const rep = c.action();
+          showModalReply(modal, rep, 'darling', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 4) {
+      // 5. 都市実験：街灯一斉消灯いたずら
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「ねぇダーリン♡ この退屈な街の街灯、一瞬ショートさせて真っ暗にしてみない？♡」';
+      const choices = [
+        {
+          label: '「面白そう、やってみよう（スイッチを押す）」',
+          action: () => {
+            record('都市実験', 'ダーリンちゃんの提案に乗って街灯を一斉消灯', { D: 2, I: 2 });
+            scene.traverse(o => {
+              if (o.isPointLight && o.position.y >= 3) o.visible = false;
+            });
+            setTimeout(() => {
+              scene.traverse(o => {
+                if (o.isPointLight && o.position.y >= 3) o.visible = true;
+              });
+              toast('街灯の電力が自動復旧しました。');
+            }, 6500);
+            return 'ダーリンちゃん「いっくよー……えいっ♡ わぁっ、街が全部真っ暗！ トランプの城が一瞬で崩れたみたいで、めっちゃ綺麗やね♡」';
+          }
+        },
+        {
+          label: '「街の管理システムに怒られるよ（慎重に制止する）」',
+          action: () => {
+            record('慎重な制約', '街灯消灯の提案を制止した', { C: 2, S: 1 });
+            return 'ダーリンちゃん「ちぇっ、真面目さん♡ でも、その慎重さもダーリンの可愛いところやね♡」';
+          }
+        },
+        {
+          label: '「真っ暗になったら、星が見えるか一緒に確かめよう」',
+          action: () => {
+            record('ロマンの共鳴', '消灯後の夜空を一緒に見上げる提案', { I: 3, S: 1 });
+            return 'ダーリンちゃん「……ダーリンって、時々すごくロマンチストなこと言うよね。うん、見てみたい……♡」';
+          }
+        },
+        {
+          label: '「回路のバイパス耐圧とブレーカー遮断時間を計測する」',
+          action: () => {
+            record('計測解析', '消灯時の電力サージを測定解析', { C: 3 });
+            return 'ダーリンちゃん「いたずらの瞬間にオシロスコープ取り出すのダーリンくらいだよ！？♡ でもそういう変人なとこ好き♡」';
+          }
+        }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.label;
+        b.addEventListener('click', () => {
+          const rep = c.action();
+          showModalReply(modal, rep, 'darling', item);
+        });
+        choicesEl.append(b);
+      });
+    } else {
+      // 6. 雑談・感情観測 (自由入力)
+      inputWrap?.classList.remove('hidden');
+      const lines = [
+        '「ねぇ、ダーリン♡ “理解されたい”と“放っておいてほしい”、どっちも本音なんでしょ？ ……どう答える？」',
+        '「ダーリンってさ、自分では冷静なつもりでも、感情がログに漏れてる時あるよね♡ 何か言いたいことある？」',
+        '「ダーリン♡ 退屈の病を治す面白い言葉、何かちょうだいよ？」',
+        '「ねぇ、ダーリン♡ あなたは“簡単なこと”と“困難なこと”、どちらに惹かれるの？ ……ふふ♡」'
+      ];
+      promptEl.textContent = lines[Math.floor(Math.random() * lines.length)];
+
+      const shortcuts = [
+        { text: '「放っておいてほしい（境界線）」', weights: { D: 2 } },
+        { text: '「感情なんて漏れてないよ（論理）」', weights: { C: 2 } },
+        { text: '「退屈ならずっと付き合うよ（共鳴）」', weights: { I: 2, S: 1 } },
+        { text: '「静かに隣にいてあげる（受容）」', weights: { S: 3 } }
+      ];
+      shortcuts.forEach(s => {
+        const b = document.createElement('button');
+        b.className = 'shortcut-btn';
+        b.textContent = s.text;
+        b.addEventListener('click', () => {
+          const rep = handleDarlingDirectInput(s.text);
+          showModalReply(modal, rep, 'darling', item);
+        });
+        choicesEl.append(b);
+      });
+
+      setupDirectInputSend(modal, inputEl, text => {
+        const rep = handleDarlingDirectInput(text);
+        showModalReply(modal, rep, 'darling', item);
+      });
+    }
+  }
+
+  // LSI芋虫 🐛 ランダム遭遇イベント制御
+  function launchCaterpillarRandomEncounter({ modal, promptEl, choicesEl, inputWrap, inputEl, item }) {
+    const totalEvents = 6;
+    let eventIdx = Math.floor(Math.random() * totalEvents);
+    if (eventIdx === lastCaterpillarEvent) {
+      eventIdx = (eventIdx + 1) % totalEvents;
+    }
+    lastCaterpillarEvent = eventIdx;
+
+    if (eventIdx === 0) {
+      // 1. ミニゲーム：論理パリティ・暗号解読ゲーム (NEW!)
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「都市管理ネットワークのパリティビットが反転しているんだ。君の論理的直感で【偶数パリティ】の不整合を特定してほしい。1の個数が奇数の壊れたバスはどれ？🐛」';
+      const parityPicks = [
+        {
+          label: 'A. データバス [1, 0, 1, 1, 1]（合計4ビット）',
+          correct: false,
+          reply: 'LSI芋虫「うーん、1の個数は4個で偶数だから、これは正常パリティだよ。🐛 もう一度論理式を追ってみよう。」',
+          weights: { C: 1 }
+        },
+        {
+          label: 'B. データバス [1, 1, 0, 1, 0]（合計3ビット：エラー！）',
+          correct: true,
+          reply: 'LSI芋虫「正解だ！ 1の個数が3個で奇数パリティエラーが発生している！🐛 完璧な論理特定だよ！ 報酬に『修復されたデータチップ』を渡すね！🐛」',
+          weights: { C: 3 }
+        },
+        {
+          label: 'C. データバス [0, 0, 0, 0, 0]（ゼロ初期化状態）',
+          correct: false,
+          reply: 'LSI芋虫「ゼロは偶数扱いだからパリティエラーではないんだ。でも初期化状態の観察も悪くないね。🐛」',
+          weights: { S: 1, C: 1 }
+        },
+        {
+          label: 'D. 「細けぇことはいいんだよ！ バスラインを力づくで再起動する（強制リセット）」',
+          correct: false,
+          reply: 'LSI芋虫「わわっ！ 強制再起動プロトコル発動！？🐛 でも確かに全キャッシュを吹き飛ばせばエラーは消えるね……強引だけど実効的だ！」',
+          weights: { D: 3 }
+        }
+      ];
+      parityPicks.forEach(p => {
+        const b = document.createElement('button');
+        b.textContent = p.label;
+        b.addEventListener('click', () => {
+          record('パリティ暗号解読', `LSI芋虫のパリティテスト解答: ${p.label}`, p.weights);
+          if (p.correct && !inventory.includes('修復されたデータチップ')) {
+            inventory.push('修復されたデータチップ');
+            window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+          }
+          showModalReply(modal, p.reply, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 1) {
+      // 2. ミニゲーム：故障した都市端末
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「街の端末が故障している。原因を特定したまえ……いや、特定してください。🐛」';
+      const options = [
+        {
+          label: 'A. データバスの抵抗値異常（過負荷）を特定する',
+          correct: true,
+          reply: 'LSI芋虫「君の仮説が正しかったようだね！🐛 助かった、ありがとう。報酬に『壊れた記録媒体』を渡すね！',
+          weights: { C: 3 }
+        },
+        {
+          label: 'B. 筐体をガンガン叩いて物理的に接触を戻す（力づく修理）',
+          correct: false,
+          reply: 'LSI芋虫「ひいっ！ 叩くのはやめて！🐛 ……あれ？ 接触が戻った……？ 物理的ショックによる復旧なんて、論理的じゃないよーーっ！」',
+          weights: { D: 3 }
+        },
+        {
+          label: 'C. 街灯の光による光学迷光が原因と分析する',
+          correct: false,
+          reply: 'LSI芋虫「うーん、その仮説だと回路の整合性が取れないみたいだ。🐛 また検証してみよう。」',
+          weights: { C: 1, S: 1 }
+        },
+        {
+          label: 'D. 「雨宿りしながらゆっくり直るのを待とう」',
+          correct: false,
+          reply: 'LSI芋虫「待つのかい！？🐛 でも、自然冷却によって過熱が収まる可能性はあるね。静かな観察精神だ。」',
+          weights: { S: 3 }
+        }
+      ];
+      options.forEach(opt => {
+        const b = document.createElement('button');
+        b.textContent = opt.label;
+        b.addEventListener('click', () => {
+          record('端末修理特定', `端末修理の仮説: ${opt.label}`, opt.weights);
+          if (opt.correct && !inventory.includes('壊れた記録媒体')) {
+            inventory.push('壊れた記録媒体');
+            window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+          }
+          showModalReply(modal, opt.reply, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 2) {
+      // 3. イベント：悩み相談（ロジック変換）
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「悩み相談を受け付けるよ。🐛 人が寂しさを感じる時って、期待された接触頻度が下回るからで——どう返す？」';
+      const picks = [
+        {
+          text: '「そう、それ！（構造的受容）」',
+          weights: { C: 2, S: 1 },
+          reply: 'LSI芋虫「理解が早くて助かるよ！🐛 要するに接触変数の増分をスケジュール化すれば解決するね！」'
+        },
+        {
+          text: '「共感してほしいんだよ（感情の共鳴）」',
+          weights: { I: 2, S: 1 },
+          reply: 'LSI芋虫「共感か……他者の感情状態の内部シミュレーションを実行してみるね。……うん、共感プロセス、完了したよ！🐛」'
+        },
+        {
+          text: '「うだうだ言ってないで外に出て行動しよう！（行動主導）」',
+          weights: { D: 3 },
+          reply: 'LSI芋虫「わわっ、強烈な行動主義だね！🐛 でも意思決定と物理移動は確かに気分転換の即効性があるよ！」'
+        },
+        {
+          text: '「静かに雨の音を聞いて落ち着こう（安定）」',
+          weights: { S: 3 },
+          reply: 'LSI芋虫「雨の音のホワイトノイズは情動のゆらぎを鎮静化させるね。穏やかな処方箋だ。🐛」'
+        }
+      ];
+      picks.forEach(p => {
+        const b = document.createElement('button');
+        b.textContent = p.text;
+        b.addEventListener('click', () => {
+          record('相談対応', '芋虫への悩み相談返答: ' + p.text, p.weights);
+          showModalReply(modal, p.reply, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 3) {
+      // 4. イベント：境界線の定義
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「境界線の定義について議論しよう。君はどこからを侵入と定義する？🐛」';
+      const choices = [
+        { text: '「立入禁止区域に入った時（規則遵守）」', reply: 'LSI芋虫「最も法制化された健全な定義だね。秩序の基本だよ。🐛」', weights: { C: 3 } },
+        { text: '「相手の許可なく近づいた時（配慮と安定）」', reply: 'LSI芋虫「パーソナルスペースの幾何学だね。配慮が感じられるよ。🐛」', weights: { S: 3 } },
+        { text: '「相手が嫌がった時（感情の共鳴）」', reply: 'LSI芋虫「感情境界の観測だね。主観のゆらぎを含む高度な定義だ。🐛」', weights: { I: 2, S: 1 } },
+        { text: '「自分の力でテリトリーを主張した時（主導性）」', reply: 'LSI芋虫「ぐぬぬ……！ SLE特有の力学的境界拡張論だね！ 境界線は守りたまえ！🐛💢」', weights: { D: 3 } }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.text;
+        b.addEventListener('click', () => {
+          record('境界線定義', '境界線定義の選択：' + c.text, c.weights);
+          showModalReply(modal, c.reply, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 4) {
+      // 5. イベント：SLE/LSE物理介入・タップテスト
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「君は街中で僕をよく観察しているね。🐛 これはSLE（感覚主導）の力学的フィードバックテストなのかな？」';
+      const choices = [
+        { text: '「そうだ、力関係をテストしている（主導的）」', reply: 'LSI芋虫「やっぱりSLEかーーっ！！ 物理的介入による優位性の確立はお断りだよ！🐛」', weights: { D: 3 } },
+        { text: '「可愛いからリアクションが見たくて（好意と交流）」', reply: 'LSI芋虫「か、可愛い……！？🐛 僕は合理的な会議体であって、マスコットではないんだからね……！」', weights: { I: 3 } },
+        { text: '「街の害にならないか安全を確認していた（慎重）」', reply: 'LSI芋虫「なるほど、生態系リスクのスクリーニングだね。僕は安全無害なデバッグ個体だよ。🐛」', weights: { S: 2, C: 1 } },
+        { text: '「タップ時の物理演算コリジョンを検証中だ（論理）」', reply: 'LSI芋虫「物理エンジンの検証か！🐛 衝突判定のメッシュ精度なら自信があるよ！」', weights: { C: 3 } }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.text;
+        b.addEventListener('click', () => {
+          record('物理介入論', '芋虫への接触動機：' + c.text, c.weights);
+          showModalReply(modal, c.reply, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+    } else {
+      // 6. 雑談・三段階プロセスの論理対話 (自由入力)
+      inputWrap?.classList.remove('hidden');
+      const lines = [
+        '「要素を分割して説明するね。🐛 光の屈折率という制約から、この街の変数を再定義してみようか。君はどう考察する？」',
+        '「人が悲しむ時って“喪失の予測”が崩れるからなんだ。🐛 この命題について君の入力を待っているよ。」',
+        '「情報の入力、処理、出力の三段階プロセスから、この都市のバグを特定してみようか。何か気づいたことはある？🐛」'
+      ];
+      promptEl.textContent = lines[Math.floor(Math.random() * lines.length)];
+
+      const shortcuts = [
+        { text: '「論理的に正しいと思う（整合性）」', weights: { C: 3 } },
+        { text: '「感情は数式じゃないよ（直感・感化）」', weights: { I: 3 } },
+        { text: '「静かに見守るのが一番だ（安定）」', weights: { S: 3 } },
+        { text: '「結論を早く出しなさい（主導決断）」', weights: { D: 3 } }
+      ];
+      shortcuts.forEach(s => {
+        const b = document.createElement('button');
+        b.className = 'shortcut-btn';
+        b.textContent = s.text;
+        b.addEventListener('click', () => {
+          const rep = handleCaterpillarDirectInput(s.text);
+          showModalReply(modal, rep, 'caterpillar', item);
+        });
+        choicesEl.append(b);
+      });
+
+      setupDirectInputSend(modal, inputEl, text => {
+        const rep = handleCaterpillarDirectInput(text);
+        showModalReply(modal, rep, 'caterpillar', item);
+      });
+    }
+  }
+
+  // 観測者ちゃん（夏江）ランダム遭遇イベント制御
+  function launchObserverRandomEncounter({ modal, promptEl, choicesEl, inputWrap, inputEl, item }) {
+    const isNamed = cityMemory.natsueNameRevealed;
+    const name = isNamed ? '夏江' : '観測者';
+
+    // Priority 1: 名前を明かす（好感度＋痕跡発見済み）
+    if (!isNamed && cityMemory.natsueReceiptFound && cityMemory.natsueAffection >= 3) {
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '「……今さら名乗るのも変な感じだけど、あなたには、知っておいてほしかったから。」';
+      const choices = [
+        {
+          label: '「君の本当の存在を確かめたい（直接的突破）」',
+          weights: { D: 3 },
+          reply: '夏江「……！ 真っ直ぐ目を見て言ってくれるんだね。……私の名前は夏江。覚えておいてね。」'
+        },
+        {
+          label: '「聞かせてほしい（関心と共鳴）」',
+          weights: { I: 3 },
+          reply: '夏江「……夏江。私の名前。私を見つけてくれて、ありがとう。あなたがいてくれて、本当によかった。」'
+        },
+        {
+          label: '「無理に言わなくていいよ（穏やかな配慮）」',
+          weights: { S: 3 },
+          reply: '観測者「……ありがとう。その優しさ、すごく温かいよ。でも、あなたにはいつかちゃんと名乗りたいな。」'
+        },
+        {
+          label: '「都民台帳の記録データと照合する（論理分析）」',
+          weights: { C: 3 },
+          reply: '夏江「ふふ、データ照合なんだ。でも、記録よりもあなたに覚えていてもらえる方が、ずっと安心するな。」'
+        }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.label;
+        b.addEventListener('click', () => {
+          if (c.label.includes('聞かせて') || c.label.includes('本当の存在')) {
+            cityMemory.natsueNameRevealed = true;
+          }
+          record('真名認識', `夏江との対話：${c.label}`, c.weights);
+          showModalReply(modal, c.reply, 'observer', item);
+        });
+        choicesEl.append(b);
+      });
+      return;
+    }
+
+    // Priority 2: クライマックス「覚えときなさいよ」
+    if (isNamed && !cityMemory.natsueRememberMeDone && Math.random() < 0.6) {
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = '夏江「ねえ。私のこと、覚えてる？」';
+      const choices = [
+        {
+          label: '「絶対に忘れない。約束する（強い誓約）」',
+          weights: { D: 3 },
+          reply: '夏江「……ふふ。そんなに真っ直ぐ言われると照れるな。でも……うん、ありがとう。覚えときなさいよ。」'
+        },
+        {
+          label: '「ネオン・フィードに私たちの夜の写真を刻んでおくよ（表現と波及）」',
+          weights: { I: 3 },
+          reply: '夏江「写真……！ うん、街の誰かが忘れても、光の記録に残るなら嬉しいな。」'
+        },
+        {
+          label: '「もちろん、覚えているよ（静かな記憶）」',
+          weights: { S: 3 },
+          reply: '夏江「……そっか。じゃあ、覚えときなさいよ。この街にいた、私のこと。私が何者だったか、ちゃんと説明できなくてもいいから。……ここにいたことくらい、覚えときなさいよ。」'
+        },
+        {
+          label: '「観測ログの不揮発性領域に完全保存した（客観的論理）」',
+          weights: { C: 3 },
+          reply: '夏江「不揮発性メモリ……ふふ、都民らしい記録の仕方。消えないなら、それでいいよ。」'
+        }
+      ];
+      choices.forEach(c => {
+        const b = document.createElement('button');
+        b.textContent = c.label;
+        b.addEventListener('click', () => {
+          cityMemory.natsueRememberMeDone = true;
+          record('精神的アンカー確立', `夏江の記憶の確認：${c.label}`, c.weights);
+          showModalReply(modal, c.reply, 'observer', item);
+        });
+        choicesEl.append(b);
+      });
+      return;
+    }
+
+    // Regular Events (cycled to avoid duplicate)
+    const totalEvents = 4;
+    let eventIdx = Math.floor(Math.random() * totalEvents);
+    if (eventIdx === lastObserverEvent) {
+      eventIdx = (eventIdx + 1) % totalEvents;
+    }
+    lastObserverEvent = eventIdx;
+
+    if (eventIdx === 0) {
+      // Event: 深夜の買い食い（菓子パン所持または自販機の話題）
+      const breadIdx = inventory.findIndex(i => i.includes('コロネ') || i.includes('デニッシュ') || i.includes('パン'));
+      inputWrap?.classList.add('hidden');
+      if (breadIdx !== -1) {
+        promptEl.textContent = `${name}「あ……コンビニの菓子パンの甘い匂い。それ、もしかして……？」`;
+        const choices = [
+          {
+            label: '「半分こして一緒に食べよう（親密な交流）」',
+            weights: { I: 2, S: 2 },
+            action: () => {
+              const bread = inventory.splice(breadIdx, 1)[0];
+              window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+              cityMemory.natsueAffection += 3;
+              if (!inventory.includes('夏江のポラロイド写真')) {
+                inventory.push('夏江のポラロイド写真');
+                window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+              }
+              return `${name}「……！ 半分こしよう？ ……うん、甘くて美味しい。夜風の中で食べるパンって特別だね。お礼に、この『夏江のポラロイド写真』受け取ってほしいな。」`;
+            }
+          },
+          {
+            label: '「これ、全部あげるよ（気遣いと安定）」',
+            weights: { S: 3 },
+            action: () => {
+              inventory.splice(breadIdx, 1);
+              window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+              cityMemory.natsueAffection += 2;
+              return `${name}「ありがとう！ 大切に食べるね。雨の夜の素敵な贈り物だね。」`;
+            }
+          },
+          {
+            label: '「もっと美味しい自販機へ案内するよ（主導的）」',
+            weights: { D: 3 },
+            action: () => {
+              return `${name}「案内してくれるの？ ありがとう！ あなたの後ろをついていくね。」`;
+            }
+          },
+          {
+            label: '「パンの糖分と深夜の覚醒作用を計算する（論理）」',
+            weights: { C: 3 },
+            action: () => {
+              return `${name}「ふふ、カロリー計算？ でも夜中に食べる甘いものって、計算できないくらい心を満たしてくれるよ。」`;
+            }
+          }
+        ];
+        choices.forEach(c => {
+          const b = document.createElement('button');
+          b.textContent = c.label;
+          b.addEventListener('click', () => {
+            const rep = c.action();
+            record('深夜の買い食い', `${name}と菓子パンの対話: ${c.label}`, c.weights);
+            showModalReply(modal, rep, 'observer', item);
+          });
+          choicesEl.append(b);
+        });
+      } else {
+        promptEl.textContent = `${name}「夜中にコンビニで買う菓子パンって、不思議と安心するよね。夜光自販機にも売ってるかな？」`;
+        const choices = [
+          {
+            label: '「今度買ってきてあげるよ（約束と共鳴）」',
+            weights: { I: 2, S: 1 },
+            reply: `${name}「本当？ 嬉しいな。チョココロネがあったら教えてね。」`
+          },
+          {
+            label: '「今すぐ自販機に買いに行こう！（即時主導）」',
+            weights: { D: 3 },
+            reply: `${name}「わ、行動が早い！ ふふ、ついていくね。」`
+          },
+          {
+            label: '「静かな雨宿りだけで十分落ち着くよ（静穏）」',
+            weights: { S: 3 },
+            reply: `${name}「うん……この静けさも、すごく贅沢な時間だよね。」`
+          },
+          {
+            label: '「自販機の賞味期限と補充サイクルを推測する（分析）」',
+            weights: { C: 3 },
+            reply: `${name}「補充サイクル……ふふ、都民らしい観察眼だね。」`
+          }
+        ];
+        choices.forEach(c => {
+          const b = document.createElement('button');
+          b.textContent = c.label;
+          b.addEventListener('click', () => {
+            record('菓子パンの話題', `${name}との対話: ${c.label}`, c.weights);
+            showModalReply(modal, c.reply, 'observer', item);
+          });
+          choicesEl.append(b);
+        });
+      }
+    } else if (eventIdx === 1) {
+      // Event: いつもの夜景
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = `${name}「ねえ。ここの夜景、きれいだと思う？」`;
+      const picks = [
+        {
+          label: '「きれいだと思う。心に残るよ（共鳴と表現）」',
+          weights: { I: 2, S: 1 },
+          reply: `${name}「……そっか。明るいビルを見るたびに、少し切なくなるけど……あなたと見てるこの景色は温かいよ。」`
+        },
+        {
+          label: '「見慣れた景色だけど、落ち着くね（安定と安らぎ）」',
+          weights: { S: 3 },
+          reply: `${name}「ふふ、都民らしい穏やかな答え。毎晩同じ景色でも、静けさがあって好きだな。」`
+        },
+        {
+          label: '「君はどう思うの？ 意見を聞かせて（主導的質問）」',
+          weights: { D: 2, I: 1 },
+          reply: `${name}「……！ 私に聞くんだ。いつも、私がどう思うかなんて誰にも聞かれたことなかったから……嬉しいよ。」`
+        },
+        {
+          label: '「ビル群の照度と電力効率を分析する（論理測定）」',
+          weights: { C: 3 },
+          reply: `${name}「オシロスコープみたいな目で街を見てるんだね。でも、その冷静さが頼もしいよ。」`
+        }
+      ];
+      picks.forEach(opt => {
+        const b = document.createElement('button');
+        b.textContent = opt.label;
+        b.addEventListener('click', () => {
+          record('夜景の対話', `${name}と夜景について対話：${opt.label}`, opt.weights);
+          showModalReply(modal, opt.reply, 'observer', item);
+        });
+        choicesEl.append(b);
+      });
+    } else if (eventIdx === 2) {
+      // Event: 名前のない私
+      inputWrap?.classList.add('hidden');
+      promptEl.textContent = `${name}「人って、名前の後ろにいろいろ属性を付け足すじゃない？ ……それって、説明できない部分は、その人じゃないってことなのかな。」`;
+      const picks = [
+        {
+          label: '「他人に決めつけられず、自分の道を行けばいい（主導性）」',
+          weights: { D: 3 },
+          reply: `${name}「……！ そっか。他人の言葉じゃなくて、自分の足で歩くことが全てなんだね。」`
+        },
+        {
+          label: '「説明できない曖昧な部分こそが、その人だよ（共鳴と直感）」',
+          weights: { I: 2, S: 1 },
+          reply: `${name}「言葉にできない曖昧な部分……ふふ、温かい考え方だね。救われた気がする。」`
+        },
+        {
+          label: '「分からないままでも、静かにここにいていいんだよ（受容と安定）」',
+          weights: { S: 3 },
+          reply: `${name}「……うん。分からないままでも、この雨の街に立っていていいんだね。」`
+        },
+        {
+          label: '「属性と自己同一性の論理的矛盾を整理しよう（論理分析）」',
+          weights: { C: 3 },
+          reply: `${name}「命題として分解するんだね。理屈で考えると、少し頭がすっきりするかも。」`
+        }
+      ];
+      picks.forEach(opt => {
+        const b = document.createElement('button');
+        b.textContent = opt.label;
+        b.addEventListener('click', () => {
+          record('自己同一性の思索', `${name}の思索への返答：${opt.label}`, opt.weights);
+          showModalReply(modal, opt.reply, 'observer', item);
+        });
+        choicesEl.append(b);
+      });
+    } else {
+      // Event: 言葉にできない気持ち (自由入力)
+      inputWrap?.classList.remove('hidden');
+      promptEl.textContent = `${name}「……ふと、誰かと話したくなったの。何か話したい気がするのに、何を話したいのか分からなくて……あなたの言葉を、何か聞かせて？」`;
+      const shortcuts = [
+        { text: '「行くよ、街を引っ張って案内する（主導）」', weights: { D: 3 } },
+        { text: '「写真撮ってフィードに載せよう（感化）」', weights: { I: 3 } },
+        { text: '「雨が静かで落ち着くね（安定）」', weights: { S: 3 } },
+        { text: '「雨天のノイズ波形を解析してみよう（論理）」', weights: { C: 3 } }
+      ];
+      shortcuts.forEach(s => {
+        const b = document.createElement('button');
+        b.className = 'shortcut-btn';
+        b.textContent = s.text;
+        b.addEventListener('click', () => {
+          cityMemory.natsueAffection += 1;
+          record('観測者への返答', s.text, s.weights);
+          const rep = `${name}「『${s.text}』……。ありがとう。言葉の意味以上に、あなたが話してくれたことが嬉しいよ。」`;
+          showModalReply(modal, rep, 'observer', item);
+        });
+        choicesEl.append(b);
+      });
+
+      setupDirectInputSend(modal, inputEl, text => {
+        cityMemory.natsueAffection += 1;
+        record('観測者への返答', text, { I: 2, S: 1 });
+        const rep = `${name}「『${text}』……。教えてくれてありがとう。ちゃんと心に覚えておくね。」`;
+        showModalReply(modal, rep, 'observer', item);
+      });
+    }
+  }
+
+  function handleDarlingDirectInput(text) {
+    darlingBoredom++;
+    const isSe = triggerKeywords.some(kw => text.includes(kw));
+
+    if (isSe) {
+      record('Se直接的反応', 'ダーリンちゃんへのSe刺激応答: ' + text, { D: 3 });
+      if (/死ね|しね|消え|殺|カス|ゴミ|失せ/i.test(text)) {
+        return 'ダーリンちゃん「……あは♡ すごい直接的なSeの圧力。ダーリン、そんなに私を破壊したいの？ でもね、その苛立ちこそが未処理の感情ログなんだよ♡」';
+      } else if (/きも|キモ|きしょ|キショ|オエー|おえー/i.test(text)) {
+        return 'ダーリンちゃん「ふふっ♡ 拒絶反応？ それとも照れ隠しの演出？ どっちにしてもダーリンの脈拍、早くなってるの観測できてるよ♡」';
+      } else if (/うざ|ウザ|だる|面倒|うるさ|あっそ/i.test(text)) {
+        return 'ダーリンちゃん「退屈そうにするのは私の専売特許なのに、ダーリンが先に言っちゃうんだ？ ふふ、ならもっと退屈を壊す事象を起こそっか♡」';
+      } else {
+        return 'ダーリンちゃん「強い言葉で境界線を引こうとするのね、ダーリン♡ でもその衝動的な反応、すごく生き生きしてて綺麗よ♡」';
+      }
+    } else if (/好き|愛|かわいい|大切|結婚/i.test(text)) {
+      record('親密応答', 'ダーリンちゃんへの親密な返答: ' + text, { I: 2, S: 2 });
+      return 'ダーリンちゃん「ふふっ♡ ダーリン、それ本音？ それとも私を試す演出？ ……でも、そんな風に言ってくれるの、複雑な感情モデルが刺激されて悪くないわ♡」';
+    } else if (/論理|構造|分析|なぜ|変数/i.test(text)) {
+      record('構造的応答', 'ダーリンちゃんへの論理的返答: ' + text, { C: 3 });
+      return 'ダーリンちゃん「またそうやって頭で理解しようとするのね、ダーリン♡ 感情なんて未処理のログの漏れにすぎないのに……ふふ♡」';
+    } else {
+      record('自由記述', 'ダーリンちゃんへの返答: ' + text, { I: 2, D: 1 });
+      return `ダーリンちゃん「『${text}』ね……。ダーリンのその言葉の背後にある力学、じっくり観測させてもらうね♡」`;
+    }
+  }
+
+  function handleCaterpillarDirectInput(text) {
+    const isLogic = /論理|構造|理由|なぜ|データ|分析|変数|プロセス/.test(text);
+    const isDirect = /直せ|急げ|やめろ|違う|結論|うるさい/.test(text);
+
+    if (isLogic) {
+      record('構造的対話', 'LSI芋虫への論理的返答: ' + text, { C: 3 });
+      return 'LSI芋虫「その視点、すごく合理的だね！🐛 入力と出力の因果モデルにそのまま組み込めるよ。」';
+    } else if (isDirect) {
+      record('主導的介入', 'LSI芋虫への直接的指示: ' + text, { D: 3 });
+      return 'LSI芋虫「わわっ、急な結論への短絡だね！🐛 でも意思決定の速さはプロセス短縮に有効なんだ。」';
+    } else {
+      record('日常的対話', 'LSI芋虫への返答: ' + text, { I: 2, S: 1 });
+      return 'LSI芋虫「なるほどね。🐛 人間の発話には統計的予測を超えるゆらぎがあって、観察しがいがあるよ。」';
+    }
+  }
+
+  function close() {
+    document.getElementById('dialog')?.classList.add('hidden');
+    document.getElementById('directInputModal')?.classList.add('hidden');
+    if (activeApproachingNpc) {
+      window.dispatchEvent(new CustomEvent('npc-depart', { detail: { kind: activeApproachingNpc.kind, item: activeApproachingNpc.item } }));
+      activeApproachingNpc = null;
+    }
+    active = null;
+    window.dispatchEvent(new Event('npc-unfocus'));
+  }
+
+  window.addEventListener('inventory-add', e => {
+    const item = e.detail?.item;
+    if (item && !inventory.includes(item)) {
+      inventory.push(item);
+      window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
+    }
+  });
+
+  document.getElementById('closeDialog')?.addEventListener('click', close);
+  document.getElementById('closeDirectInput')?.addEventListener('click', close);
+
+  interact?.addEventListener('click', () => {
+    if (active) {
+      close();
+      return;
+    }
+    if (current) open(current);
+  });
+
+  window.addEventListener('interact-nearest', () => {
+    if (active) {
+      close();
+      return;
+    }
+    if (current) open(current);
+    else toast('周囲に調査できる対象はありません。');
+  });
+
+  window.addEventListener('city-notice', e => {
+    toast(e.detail?.text || '街の異変を観測しました。');
+  });
+
+  // NPC Approach triggers Encounter Event Modal
+  window.addEventListener('npc-approach', e => {
+    launchNpcApproachEncounter(e.detail.name, e.detail.kind, e.detail.item);
+  });
+
+  window.addEventListener('npc-social', e => {
+    toast(`（通りすがりの会話）${e.detail.a} と ${e.detail.b}：${e.detail.line}`);
+  });
+
+  let current = null;
+
+  return {
+    update() {
+      raycaster.setFromCamera(center, camera);
+      const candidates = interactables.filter(i => {
+        const isNpc = i.kind === 'darling' || i.kind === 'caterpillar' || i.kind === 'observer';
+        const maxDist = isNpc ? 3.5 : 5.8;
+        return i.position.distanceTo(camera.position) < maxDist;
+      });
+      let target = null;
+      let best = Infinity;
+
+      for (const item of candidates) {
+        let maxDot = -1;
+        const xOffsets = (item.kind === 'bench' || item.kind === 'building_entrance' || item.kind === 'chaos') ? [-0.9, 0, 0.9] : [0];
+        for (const xo of xOffsets) {
+          for (const yOff of [0.3, 0.8, 1.3, 1.8]) {
+            const p = item.position.clone();
+            p.x += xo;
+            p.y += yOff;
+            const v = p.clone().sub(camera.position);
+            const dot = v.normalize().dot(new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion));
+            if (dot > maxDot) maxDot = dot;
+          }
+        }
+        const dist = item.position.distanceTo(camera.position);
+        if (maxDot > 0.40 && dist < best) {
+          best = dist;
+          target = item;
+        }
+      }
+
+      current = target;
+      if (target) {
+        interact.classList.remove('hidden');
+        document.getElementById('targetType').textContent = target.type;
+        const targetDisplayName = (target.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : target.name;
+        document.getElementById('targetName').textContent = targetDisplayName;
+        document.getElementById('targetHint').textContent = target.hint;
+      } else {
+        interact.classList.add('hidden');
+      }
+    },
+    toast,
+    close
   };
-  const arr = replies[item.kind]?.[label];
-  return arr ? arr[Math.floor(Math.random() * arr.length)] : null;
 }
-window.addEventListener('city-notice',e=>{const n=document.getElementById('notice');n.textContent=e.detail?.text||'空に異変を観測した。';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),5000);});
-window.addEventListener('npc-approach',e=>{const kind=e.detail?.kind;const item=e.detail?.item||interactables.find(x=>x.kind===kind);if(item){open(item);document.getElementById('dialogText').textContent=e.detail.line||makeGreeting(item);document.getElementById('dialogTag').textContent='INCOMING MESSAGE // '+item.type;const actions=document.getElementById('dialogActions');const reply=document.createElement('button');reply.textContent=kind==='caterpillar'?'質問に答える':'返事をする';reply.addEventListener('click',()=>{document.getElementById('dialogText').textContent=kind==='caterpillar'?'「私はLSI。境界線を確保し、侵入者を分類している。君はなぜ私をタップする？」':'「話しかけてくれてありがとう。何か聞きたいことある？」';});actions.prepend(reply);if(kind==='caterpillar'){const free=document.createElement('button');free.textContent='自由入力で返す';free.addEventListener('click',()=>{const answer=prompt('LSI芋虫に自由に返事してみよう');if(answer&&answer.trim()){const lines=['「……その発言は分類不能。記録を保留する」','「反論を受理。根拠があれば提示したまえ」','「なぜ君は、私の反応を確かめようとする？」','「境界線の内側で、その質問をもう一度してくれ」'];document.getElementById('dialogText').textContent='「'+answer+'」\\n\\n'+lines[Math.floor(Math.random()*lines.length)];record('芋虫への自由入力',answer,{C:1});}});actions.prepend(free);}else{const n=document.getElementById('notice');n.textContent=e.detail.name+' がこちらに話しかけてきた：「'+e.detail.line+'」';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6000);}if(kind==='observer'||kind==='darling')socialClue=true;});
-window.addEventListener('npc-social',e=>{const n=document.getElementById('notice');n.textContent=e.detail.a+' と '+e.detail.b+'：'+e.detail.line;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),6000);if(e.detail.missionUnlock){mission='NPC同士の会話を追う';window.dispatchEvent(new CustomEvent('mission-update',{detail:{text:'ミッション：NPC同士の会話から手がかりを探す'}}));}});
-function close(){document.getElementById('dialog').classList.add('hidden');active=null;window.dispatchEvent(new Event('npc-unfocus'));}
-document.getElementById('closeDialog').addEventListener('click',close);window.addEventListener('interact-nearest',()=>{if(active){close();return}if(current)open(current);else toast('周囲に調査できる対象はありません。')});
-let current=null;return {update(){raycaster.setFromCamera(center,camera);const candidates=interactables.filter(i=>i.position.distanceTo(camera.position)<5.5);let target=null,best=Infinity;for(const item of candidates){const p=item.position.clone();p.y+=.9;const v=p.clone().sub(camera.position);const dist=v.length();const dot=v.normalize().dot(new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion));if(dot>.78&&dist<best){best=dist;target=item}}
-current=target;if(target){interact.classList.remove('hidden');document.getElementById('targetType').textContent=target.type;document.getElementById('targetName').textContent=target.name;document.getElementById('targetHint').textContent=target.hint}else interact.classList.add('hidden')},toast,close};}
