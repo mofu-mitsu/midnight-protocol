@@ -4,10 +4,13 @@
  * Google スプレッドシート連携用 Google Apps Script (GAS) スクリプト
  * ====================================================================
  * 
+ * 【現在連携中のWebアプリURL】
+ * https://script.google.com/macros/s/AKfycbweJUMQOjMvu603L2OS9MxaIJzNkMxV0g5x3m1HQm0OOUM1GoOErej7J1CiNqFyMFIupw/exec
+ * 
  * 【設定手順】
- * 1. Google スプレッドシートを新規作成し、適当な名前（例: 深夜都市観測データ）を付けます。
+ * 1. Google スプレッドシートを新規作成（または既存シートを使用）します。
  * 2. ツールバーの「拡張機能」>「Apps Script」をクリックします。
- * 3. エディタに最初から書かれているコードを全て消去し、このファイルの内容をそのまま貼り付けます。
+ * 3. エディタに最初から書かれているコードを全て消去し、このファイルの内容をそのまま貼り付けて保存します。
  * 4. 右上の「デプロイ」ボタン >「新しいデプロイ」をクリックします。
  * 5. 種類の選択（歯車アイコン）で「ウェブアプリ」を選択します。
  * 6. 次の項目を設定します：
@@ -15,13 +18,8 @@
  *    - 次のユーザーとして実行: 自分（あなたのGoogleアカウント）
  *    - アクセスできるユーザー: 「全員」（※ログイン不要でPOST可能にするため重要）
  * 7. 「デプロイ」をクリックし、Googleの承認を許可します。
- * 8. 発行された「ウェブアプリのURL」（https://script.google.com/macros/s/.../exec）をコピーします。
  * 
- * 【アプリへのURL設定方法】
- * ブラウザのコンソール（F12）で以下を実行、または localStorage に保存するだけで自動送信されます：
- * localStorage.setItem('gas_webapp_url', 'コピーしたウェブアプリURL');
- * 
- * 観測終了時に自動的にGoogleスプレッドシートへ行が追加されます。
+ * ※アプリ内には既に上記URLがデフォルト設定されているため、観測終了時に自動的に全ログがシートへ送信されます。
  */
 
 function doPost(e) {
@@ -45,10 +43,11 @@ function doPost(e) {
         "達成おつかい数",
         "NPC親密度ステータス",
         "所持品一覧",
-        "行動ログ要約"
+        "自由入力・返信発言一覧",
+        "全行動ログ（時系列順）"
       ]);
       // ヘッダーのスタイル適用
-      sheet.getRange(1, 1, 1, 15).setBackground("#1a1a2e").setFontColor("#72f6ff").setFontWeight("bold");
+      sheet.getRange(1, 1, 1, 16).setBackground("#1a1a2e").setFontColor("#72f6ff").setFontWeight("bold");
     }
 
     var data = {};
@@ -72,6 +71,7 @@ function doPost(e) {
     var errands = data.errandsCompleted || 0;
     var npcStatus = data.npcStatus || "";
     var inventory = Array.isArray(data.inventory) ? data.inventory.join(", ") : (data.inventory || "");
+    var freeReplies = data.freeReplies || "（自由入力なし）";
     var logSummary = data.logSummary || "";
 
     sheet.appendRow([
@@ -89,6 +89,7 @@ function doPost(e) {
       errands,
       npcStatus,
       inventory,
+      freeReplies,
       logSummary
     ]);
 

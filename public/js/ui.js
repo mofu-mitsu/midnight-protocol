@@ -208,40 +208,40 @@ function setup3DVending(interactions) {
 
   const drinks = [
     {
+      name: '深夜エスプレッソ',
+      color: 0xff9900,
+      effect: '漆黒の濃縮珈琲。直断力と覚醒を促進 [D主導]',
+      weights: { D: 2 }
+    },
+    {
       name: '夜光ソーダ',
       color: 0x33e5ff,
-      effect: '青い微発泡。知覚と分析力を研ぎ澄ます',
-      weights: { C: 1 }
+      effect: '青い微発泡。知覚と論理分析力を研ぎ澄ます [C慎重]',
+      weights: { C: 2 }
     },
     {
       name: '桃色ミルク',
       color: 0xff66cc,
-      effect: '濃厚な甘み。共感と安心感が広がる',
-      weights: { I: 1, S: 1 }
-    },
-    {
-      name: '深夜エスプレッソ',
-      color: 0xff9900,
-      effect: '漆黒の濃縮珈琲。直断力と覚醒を促進',
-      weights: { D: 1 }
+      effect: '濃厚な甘み。感情の交流と共鳴が広がる [I感化]',
+      weights: { I: 2 }
     },
     {
       name: '星屑ウォーター',
       color: 0xaaffdd,
-      effect: '純度の高い天体蒸留水。安定と落ち着き',
-      weights: { S: 1 }
+      effect: '純度の高い天体蒸留水。静穏と落ち着き [S安定]',
+      weights: { S: 2 }
     },
     {
       name: '夜のチョココロネ',
       color: 0x6e3d16,
-      effect: '深夜のコンビニ定番の菓子パン。懐かしくほろ苦い甘み',
-      weights: { I: 1, S: 1 }
+      effect: '深夜の買い食い定番菓子パン。懐かしい甘みと衝動 [I感化・D主導]',
+      weights: { I: 1, D: 1 }
     },
     {
       name: 'シュガーデニッシュ',
       color: 0xee9933,
-      effect: '夜風に溶ける甘いデニッシュ。ノスタルジー',
-      weights: { S: 1 }
+      effect: '夜風に溶ける甘いデニッシュ。規則的なやすらぎ [S安定・C慎重]',
+      weights: { S: 1, C: 1 }
     }
   ];
 

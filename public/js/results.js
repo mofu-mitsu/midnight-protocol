@@ -4,7 +4,7 @@
 // ================================================================
 
 import { analysis, getSummary } from './analysis.js';
-import { cityMemory } from './memory.js';
+import { cityMemory, getRelationshipStatus } from './memory.js';
 
 const STORAGE_KEY = 'midnight_protocol_past_records';
 
@@ -221,27 +221,31 @@ export class ResultsController {
     // 履歴比較の計算
     const historyDiff = this.calculateHistoryDiff(scores, arch.title);
 
-    // DOM更新
-    this.renderResultDOM({
-      scores,
-      archetype: arch,
-      historyDiff,
-      totalActions: analysis.actions,
-      dateStr: new Date().toLocaleString('ja-JP')
-    });
+    try {
+      // DOM更新
+      this.renderResultDOM({
+        scores,
+        archetype: arch,
+        historyDiff,
+        totalActions: analysis.actions,
+        dateStr: new Date().toLocaleString('ja-JP')
+      });
 
-    // 履歴を保存
-    this.saveRecordToStorage({
-      date: new Date().toISOString(),
-      scores,
-      archetype: arch.title,
-      actions: analysis.actions
-    });
+      // 履歴を保存
+      this.saveRecordToStorage({
+        date: new Date().toISOString(),
+        scores,
+        archetype: arch.title,
+        actions: analysis.actions
+      });
 
-    // Google Apps Script (GAS) への静默送信（URL設定時のみ動作）
-    this.sendToGasIfConfigured(scores, arch.title);
-
-    this.modal?.classList.remove('hidden');
+      // Google Apps Script (GAS) への自動送信
+      this.sendToGasIfConfigured(scores, arch.title);
+    } catch (err) {
+      console.error('Error rendering results:', err);
+    } finally {
+      this.modal?.classList.remove('hidden');
+    }
   }
 
   calculateHistoryDiff(currentScores, currentArchTitle) {
@@ -281,24 +285,37 @@ export class ResultsController {
 
   sendToGasIfConfigured(scores, archetypeTitle) {
     try {
-      const gasUrl = window.GAS_WEBAPP_URL || localStorage.getItem('gas_webapp_url');
+      const defaultUrl = 'https://script.google.com/macros/s/AKfycbweJUMQOjMvu603L2OS9MxaIJzNkMxV0g5x3m1HQm0OOUM1GoOErej7J1CiNqFyMFIupw/exec';
+      const gasUrl = window.GAS_WEBAPP_URL || localStorage.getItem('gas_webapp_url') || defaultUrl;
       if (!gasUrl) return;
-      const rel = getRelationshipStatus();
+
+      const rel = typeof getRelationshipStatus === 'function' ? getRelationshipStatus() : {};
       const selfInputEl = document.getElementById('selfTypeInput');
+
+      // 全行動ログ（時系列順）
+      const allLogs = (analysis.logs || []).slice().reverse().map(l => `[${l.time}] ${l.type}: ${l.detail}`).join('\n');
+
+      // 自由入力・返信のみを抽出した専用ログ
+      const freeReplies = (analysis.logs || []).filter(l =>
+        l.type.includes('自由') || l.type.includes('反応') || l.type.includes('応答') || l.type.includes('対話') || l.type.includes('返答')
+      ).reverse().map(l => `[${l.time}] ${l.type} ➔ ${l.detail}`).join('\n');
+
       const payload = {
         timestamp: new Date().toLocaleString('ja-JP'),
         selfType: selfInputEl?.value.trim() || '未設定',
         archetype: archetypeTitle,
         scores,
         totalActions: analysis.actions,
-        walkDistance: analysis.walkDistance,
-        runDistance: analysis.runDistance,
+        walkDistance: Math.round(analysis.walkDistance),
+        runDistance: Math.round(analysis.runDistance),
         anomaliesFixed: cityMemory.anomaliesFixed || 0,
         errandsCompleted: cityMemory.errandsCompleted || 0,
-        npcStatus: `ダーリン: ${rel.darlingStatus} / 夏江: ${rel.natsueStatus} / 芋虫: ${rel.caterpillarStatus}`,
+        npcStatus: `ダーリン: ${rel.darlingStatus || '未確定'} / 夏江: ${rel.natsueStatus || '未確定'} / 芋虫: ${rel.caterpillarStatus || '通常'}`,
         inventory: window.getCurrentInventory?.() || [],
-        logSummary: analysis.logs.slice(0, 10).map(l => `[${l.time}] ${l.type}: ${l.detail}`).join(' // ')
+        freeReplies: freeReplies || '（自由入力なし）',
+        logSummary: allLogs || '（ログなし）'
       };
+
       fetch(gasUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -440,7 +457,7 @@ export class ResultsController {
     }
 
     if (i >= 40 || (i >= d && i >= s && i >= c)) {
-      return '「あっはは！ 街角で出会う人に片っ端から話しかけたり、怪しい空間にワクワク突っ込んだり……アンタ、最高にノリがいいやん！ 一緒に街をふらついてて一番退屈しないのは間違いなくアンタだよ♡ その好奇心、ずっと失くさないでね！」';
+      return '「あっはは！ 街角で出会う人に片っ端から話しかけたり、怪しい空間にワクワク突っ込んだり……アンタ、最高にノリがいいやん！ 一緒に街をふらついてて一番退屈しないのは間違いなくアンタよ♡ その好奇心、ずっと失くさないでね！」';
     }
 
     if (c >= 40 || (c >= d && c >= i && c >= s)) {

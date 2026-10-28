@@ -81,7 +81,6 @@ export function setupInteractions(camera) {
       dialogueOpts = [
         ['「結論を急ぎたまえ。街のデバッグを最優先で進めるぞ」', { D: 2 }],
         ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
-        ['「もういいwww」（芋虫が反省ログを書く）', { I: 2, S: 1 }],
         ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
         ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
       ];
@@ -429,11 +428,9 @@ export function setupInteractions(camera) {
     }
 
     if (item.kind === 'caterpillar') {
-      if (label.includes('もういい') || label.includes('反省ログ')) return 'LSI芋虫「『もういいwww』……！？ なぜ笑うんだ！ 🐛【ログ記録中……】『観測者からの草の多発により論理整合性が一時的に破綻。次回はより適切な境界線を設定すること……反省。』……ほら、反省ログを保存したよ！🐛💦';
       const opts = [
         ['芋虫をタップする（SLE物理介入テスト）', { D: 2 }],
         ['「人が悲しむ時の喪失の予測について、もっとフランクに語ろうよ」', { I: 2 }],
-        ['「もういいwww」（芋虫が反省ログを書く）', { I: 2, S: 1 }],
         ['芋虫の安全な生息環境と境界線の平穏を見守る', { S: 2 }],
         ['光の屈折率と三段階プロセスによる都市デバッグについて聞く', { C: 2 }]
       ];
@@ -1287,40 +1284,43 @@ export function setupInteractions(camera) {
     lastDarlingEvent = eventIdx;
 
     if (eventIdx === 0) {
-      // 1. ミニゲーム：電脳じゃんけん（DISC心理戦）
+      // 1. ミニゲーム：電脳じゃんけん（毎度完全ランダム勝負・DISC変動なし）
       inputWrap?.classList.add('hidden');
       promptEl.textContent = '「ねぇダーリン♡ 私と電脳じゃんけんしよ？ 勝ったら私の内緒の秘密教えてあげる♡ 負けたら私の退屈に付き合ってね？」';
-      const rpsPicks = [
-        {
-          label: '✊ グー（迷いなく拳で強行突破する）',
-          reply: 'ダーリンちゃん「ふふっ♡ 私はチョキ！ ダーリンの勝ち♡ 迷いなく拳を叩き込んでくるその直球な強気、嫌いじゃないよ♡ 約束通り……私の本当の秘密、教えてあげる。実はね、ダーリンが走ってる時、後ろ姿見惚れてたの♡」',
-          weights: { D: 3 }
-        },
-        {
-          label: '✌ チョキ（相手の出方を鋭く読み切る）',
-          reply: 'ダーリンちゃん「あはは♡ 私もチョキ！ あいこやね♡ 私の裏をかこうとするその計算された刃、すごくゾクゾクするわ♡ ダーリンの観察眼、合格点あげよっか♡」',
-          weights: { C: 2, D: 1 }
-        },
-        {
-          label: '🖐 パー（大きく手を開いて優しく包み込む）',
-          reply: 'ダーリンちゃん「ふふっ♡ 私はグー！ ダーリンの勝ちやん♡ 大きく手を開いて私を受け止めてくれる感じ、ダーリンの優しさやね♡ 秘密教えてあげる。この街の雨、ダーリンといると全然冷たくないんよ♡」',
-          weights: { S: 3 }
-        },
-        {
-          label: '📊 「じゃんけんの手の出現確率の分散を統計分析する」',
-          reply: 'ダーリンちゃん「ちょっ、勝負する前から確率論で詰めてくるのやめてーー！？♡ でもそういう理屈っぽいところもダーリンらしくて可愛いけん許す♡」',
-          weights: { C: 3 }
-        }
+      const rpsHands = [
+        { name: 'グー', icon: '✊' },
+        { name: 'チョキ', icon: '✌' },
+        { name: 'パー', icon: '🖐' }
       ];
-      rpsPicks.forEach(p => {
+      rpsHands.forEach(playerChoice => {
         const b = document.createElement('button');
-        b.textContent = p.label;
+        b.textContent = `${playerChoice.icon} ${playerChoice.name}`;
         b.addEventListener('click', () => {
-          record('電脳じゃんけん', `ダーリンちゃんとの勝負手：${p.label}`, p.weights);
-          showModalReply(modal, p.reply, 'darling', item);
+          const darlingChoice = rpsHands[Math.floor(Math.random() * rpsHands.length)];
+          let rep = '';
+          if (playerChoice.name === darlingChoice.name) {
+            rep = `ダーリンちゃん「私は${darlingChoice.icon} ${darlingChoice.name}！ あはは、あいこやん！♡ 気ぃ合うやん、私たち。もう一回勝負したい気分やね♡」`;
+          } else if (
+            (playerChoice.name === 'グー' && darlingChoice.name === 'チョキ') ||
+            (playerChoice.name === 'チョキ' && darlingChoice.name === 'パー') ||
+            (playerChoice.name === 'パー' && darlingChoice.name === 'グー')
+          ) {
+            rep = `ダーリンちゃん「私は${darlingChoice.icon} ${darlingChoice.name}！ ダーリンの勝ちやん♡ 悔しいけど約束通り秘密教えてあげる……実はね、ダーリンが遠くから歩いてくるの見えた瞬間、ちょっと嬉しかったんよ♡」`;
+          } else {
+            rep = `ダーリンちゃん「私は${darlingChoice.icon} ${darlingChoice.name}！ ウチの勝ち〜！♡ やったね、約束通りダーリンは私の退屈に付き合ってもらうけんね♡」`;
+          }
+          record('電脳じゃんけん', `ダーリンちゃんとじゃんけん勝負（あなた: ${playerChoice.name} vs ダーリン: ${darlingChoice.name}）`, {});
+          showModalReply(modal, rep, 'darling', item);
         });
         choicesEl.append(b);
       });
+      const analyzeBtn = document.createElement('button');
+      analyzeBtn.textContent = '📊 「じゃんけんの手の出現確率の分散を統計分析する」';
+      analyzeBtn.addEventListener('click', () => {
+        record('電脳じゃんけん', 'じゃんけんの手の出現確率の分散を統計分析', {});
+        showModalReply(modal, 'ダーリンちゃん「ちょっ、勝負する前から確率論で詰めてくるのやめてーー！？♡ でもそういう理屈っぽいところもダーリンらしくて可愛いけん許す♡」', 'darling', item);
+      });
+      choicesEl.append(analyzeBtn);
     } else if (eventIdx === 1) {
       // 2. ミニゲーム：本音と演出クイズ
       inputWrap?.classList.add('hidden');
@@ -1638,6 +1638,11 @@ export function setupInteractions(camera) {
           text: '「静かに雨の音を聞いて落ち着こう」',
           weights: { S: 3 },
           reply: 'LSI芋虫「雨の音のホワイトノイズは情動のゆらぎを鎮静化させるね。穏やかな処方箋だ。🐛」'
+        },
+        {
+          text: '「もういいwww」',
+          weights: { I: 2 },
+          reply: 'LSI芋虫「『もういいwww』……！？ なぜ笑うんだ！ 🐛【ログ記録中……】『観測者からの草の多発により論理整合性が一時的に破綻。次回はより適切な境界線を設定すること……反省。』……ほら、反省ログを保存したよ！🐛💦'
         }
       ];
       picks.forEach(p => {
