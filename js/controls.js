@@ -16,30 +16,8 @@ export function setupControls(camera, renderer) {
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // ダイアログ表示中だけモバイル操作パネルを隠し、閉じたら必ず復帰させる。
-  // display を直接切り替えず、モーダルの実際の表示状態を監視して同期する。
-  const modalIds = ['dialog', 'directInputModal', 'minigameModal', 'vendingModal'];
-  const mobileControls = document.getElementById('mobileControls');
-  const syncMobileControls = () => {
-    const modalOpen = modalIds.some(id => {
-      const el = document.getElementById(id);
-      return !!el && !el.classList.contains('hidden');
-    });
-    document.body.classList.toggle('modal-controls-suppressed', isMobile && modalOpen);
-    // モーダルを開く直前に触っていたジョイスティック入力をリセットする。
-    if (modalOpen) {
-      stick = { x: 0, y: 0 };
-    }
-  };
-  if (mobileControls) {
-    const modalObserver = new MutationObserver(syncMobileControls);
-    modalIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) modalObserver.observe(el, { attributes: true, attributeFilter: ['class', 'style', 'aria-hidden'] });
-    });
-    syncMobileControls();
-  }
-
+  // モーダル中も操作UI自体は消さない。会話終了の入力経路を失わないよう、
+  // 表示位置・重なりはダイアログ側で制御する。
   const isTypingTarget = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 
   const clearMoveKeys = () => {
