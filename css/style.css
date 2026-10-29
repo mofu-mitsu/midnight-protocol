@@ -35,6 +35,11 @@ html, body {
 }
 #scene canvas {
   display: block;
+  /* Prevent browser pinch/double-tap zoom on the game surface.
+     Custom touch handlers still handle camera rotation and world taps. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Atmospheric Overlays */
