@@ -2996,3 +2996,39 @@ body.hud-hidden .hud-toggle-btn {
   object-fit: cover;
   display: block;
 }
+
+
+/* =========================================
+   ★ モーダル共通：スマホで長い内容をスクロール
+   ========================================= */
+.vending-modal,
+.minigame-modal,
+.feed-modal,
+.image-save-modal {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  box-sizing: border-box;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.vending-card,
+.minigame-card,
+.cyber-modal-card,
+.direct-input-card {
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  box-sizing: border-box;
+}
+
+/* 会話ダイアログもiPhoneで滑らかにスクロール */
+.dialog {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
