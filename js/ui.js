@@ -201,7 +201,9 @@ export function setupUI(interactions) {
 
   // Start screen & reset
   document.getElementById('startButton')?.addEventListener('click', () => {
+    document.body.classList.add('game-started');
     document.getElementById('startScreen')?.classList.add('hidden');
+    document.querySelector('.mobile-hud-top-actions')?.classList.remove('hidden');
     interactions.toast('接続完了。自由に歩いて、都市の異常や住人を観測してください。');
   });
 

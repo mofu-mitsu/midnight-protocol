@@ -1402,30 +1402,40 @@ body.mobile #mobileControls {
   display: block;
 }
 
-/* Hide mobile controls when dialog/input modal is open to prevent overlapping */
+/* Hide mobile controls when dialog/input modal is open or before game starts */
 body.in-dialog #mobileControls,
 body:has(#dialog:not(.hidden)) #mobileControls,
 body:has(#directInputModal:not(.hidden)) #mobileControls,
-body:has(#resultsModal:not(.hidden)) #mobileControls {
+body:has(#resultsModal:not(.hidden)) #mobileControls,
+body:not(.game-started) #mobileControls,
+body:has(#startScreen:not(.hidden)) #mobileControls {
   display: none !important;
   pointer-events: none !important;
 }
 
 /* Mobile HUD Top Actions (Always-Visible Exit Button & Menu FAB) */
 .mobile-hud-top-actions {
-  display: none;
+  display: none !important;
 }
 
 .mobile-always-exit-btn {
-  display: none;
+  display: none !important;
 }
 
 .mobile-menu-fab {
-  display: none;
+  display: none !important;
 }
 
 .hud-mobile-close-btn {
-  display: none;
+  display: none !important;
+}
+
+/* Before game starts, absolutely hide mobile HUD top actions */
+body:not(.game-started) .mobile-hud-top-actions,
+body:has(#startScreen:not(.hidden)) .mobile-hud-top-actions,
+.mobile-hud-top-actions.hidden {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 /* Mobile Responsive Layout & HUD Rules */
@@ -1470,8 +1480,8 @@ body:has(#resultsModal:not(.hidden)) #mobileControls {
     padding: 2px 5px;
   }
 
-  /* Show Top Floating Mobile Actions: [観測終了(解析)] [☰ メニュー] */
-  .mobile-hud-top-actions {
+  /* Show Top Floating Mobile Actions only after game started: [観測終了(解析)] [☰ メニュー] */
+  body.game-started .mobile-hud-top-actions:not(.hidden) {
     display: flex !important;
     align-items: center;
     gap: 6px;
@@ -1627,11 +1637,11 @@ body:has(#resultsModal:not(.hidden)) #mobileControls {
 }
 
 /* Fallback for body.mobile class regardless of width */
-body.mobile .mobile-hud-top-actions {
+body.mobile.game-started .mobile-hud-top-actions:not(.hidden) {
   display: flex;
 }
-body.mobile .mobile-always-exit-btn,
-body.mobile .mobile-menu-fab {
+body.mobile.game-started .mobile-always-exit-btn,
+body.mobile.game-started .mobile-menu-fab {
   display: inline-flex;
 }
 body.mobile .hud-right {
@@ -2372,32 +2382,6 @@ body.mobile.mobile-menu-open .hud-right {
 .results-self-badge strong {
   color: #ffffff;
   font-weight: 700;
-}
-
-.results-gas-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(114, 246, 255, 0.1);
-  border: 1px solid rgba(114, 246, 255, 0.4);
-  color: var(--cyan);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.results-gas-badge.success {
-  background: rgba(46, 213, 115, 0.15);
-  border-color: rgba(46, 213, 115, 0.5);
-  color: #2ed573;
-}
-
-.results-gas-badge.warning {
-  background: rgba(255, 177, 66, 0.15);
-  border-color: rgba(255, 177, 66, 0.5);
-  color: #ffb142;
 }
 
 /* モバイル対応調整 */
