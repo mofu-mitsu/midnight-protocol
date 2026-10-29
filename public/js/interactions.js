@@ -2107,6 +2107,7 @@ ${studentCardHtml}`;
   }
 
   function close() {
+    document.body.classList.remove('in-dialog', 'modal-controls-suppressed');
     document.getElementById('dialog')?.classList.add('hidden');
     document.getElementById('directInputModal')?.classList.add('hidden');
     if (activeApproachingNpc) {
