@@ -1402,12 +1402,7 @@ body.mobile #mobileControls {
   display: block;
 }
 
-/* 会話・入力モーダル中は操作UIだけを一時的に隠す。
-   モーダルの hidden 状態が変われば controls.js の監視で自動復帰する。 */
-body.mobile.modal-controls-suppressed #mobileControls {
-  visibility: hidden;
-  pointer-events: none;
-}
+/* 会話中も操作UIを維持し、操作不能になるのを防ぐ。 */
 
 /* Keep controls hidden before gameplay only.
    During dialogs, controls.js toggles modal-controls-suppressed and restores
