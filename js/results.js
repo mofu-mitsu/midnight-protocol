@@ -290,6 +290,12 @@ export class ResultsController {
       const gasUrl = window.GAS_WEBAPP_URL || localStorage.getItem('gas_webapp_url') || defaultUrl;
       if (!gasUrl) return;
 
+      const gasBadge = document.getElementById('resGasSyncBadge');
+      if (gasBadge) {
+        gasBadge.classList.remove('hidden', 'success', 'warning');
+        gasBadge.textContent = '☁️ 観測記録：スプレッドシートへ同期送信中...';
+      }
+
       const rel = typeof getRelationshipStatus === 'function' ? getRelationshipStatus() : {};
       const selfInputEl = document.getElementById('selfTypeInput');
 
@@ -317,12 +323,37 @@ export class ResultsController {
         logSummary: allLogs || '（ログなし）'
       };
 
+      const jsonStr = JSON.stringify(payload);
+
+      // 1. sendBeacon をサポートしていれば Blob (text/plain;charset=utf-8) で優先送信
+      let beaconSent = false;
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try {
+          const blob = new Blob([jsonStr], { type: 'text/plain;charset=utf-8' });
+          beaconSent = navigator.sendBeacon(gasUrl, blob);
+        } catch (beaconErr) {
+          console.log('sendBeacon failed, falling back to fetch:', beaconErr);
+        }
+      }
+
+      // 2. fetch での送信 (mode: no-cors, Content-Type: text/plain;charset=utf-8 は CORS-safelisted で確実に送信される)
       fetch(gasUrl, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.log('GAS transmission ignored:', err));
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: jsonStr
+      }).then(() => {
+        if (gasBadge) {
+          gasBadge.classList.add('success');
+          gasBadge.textContent = '☁️ 観測記録：スプレッドシート送信完了 (GAS)';
+        }
+      }).catch(err => {
+        console.log('GAS transmission ignored:', err);
+        if (gasBadge && !beaconSent) {
+          gasBadge.classList.add('warning');
+          gasBadge.textContent = '☁️ 観測記録：送信試行完了 (GAS)';
+        }
+      });
     } catch (e) {
       console.warn('GAS payload error:', e);
     }

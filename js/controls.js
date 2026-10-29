@@ -16,7 +16,30 @@ export function setupControls(camera, renderer) {
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+  const isTypingTarget = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+
+  const clearMoveKeys = () => {
+    keys['KeyW'] = false;
+    keys['KeyA'] = false;
+    keys['KeyS'] = false;
+    keys['KeyD'] = false;
+    keys['ArrowUp'] = false;
+    keys['ArrowDown'] = false;
+    keys['ArrowLeft'] = false;
+    keys['ArrowRight'] = false;
+  };
+
+  document.addEventListener('focusin', e => {
+    if (isTypingTarget(e.target)) {
+      clearMoveKeys();
+    }
+  });
+
   document.addEventListener('keydown', e => {
+    if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) {
+      clearMoveKeys();
+      return;
+    }
     keys[e.code] = true;
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
     if (e.code === 'KeyE') window.dispatchEvent(new Event('interact-nearest'));
@@ -30,6 +53,10 @@ export function setupControls(camera, renderer) {
   });
 
   document.addEventListener('keyup', e => {
+    if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) {
+      clearMoveKeys();
+      return;
+    }
     keys[e.code] = false;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       keys.ShiftRecorded = false;
@@ -146,6 +173,12 @@ export function setupControls(camera, renderer) {
 
   return {
     update(dt) {
+      if (isTypingTarget(document.activeElement)) {
+        clearMoveKeys();
+        direction.set(0, 0, 0);
+        return;
+      }
+
       const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - stick.y;
       const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + stick.x;
       direction.set(s, 0, f);

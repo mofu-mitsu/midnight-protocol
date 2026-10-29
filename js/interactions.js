@@ -339,6 +339,7 @@ export function setupInteractions(camera) {
 
   function open(item) {
     if (!item) return;
+    document.body.classList.add('in-dialog');
     window.dispatchEvent(new CustomEvent('inventory-update', { detail: { items: inventory.slice() } }));
     document.exitPointerLock?.();
     active = item;
@@ -1244,6 +1245,7 @@ ${studentCardHtml}`;
 
   function launchNpcApproachEncounter(speakerName, kind, item = null) {
     document.exitPointerLock?.();
+    document.body.classList.add('in-dialog');
     active = item;
     activeApproachingNpc = { kind, item };
 
@@ -2107,6 +2109,7 @@ ${studentCardHtml}`;
   }
 
   function close() {
+    document.body.classList.remove('in-dialog');
     document.getElementById('dialog')?.classList.add('hidden');
     document.getElementById('directInputModal')?.classList.add('hidden');
     if (activeApproachingNpc) {

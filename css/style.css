@@ -1402,9 +1402,34 @@ body.mobile #mobileControls {
   display: block;
 }
 
-/* Mobile Header & Responsive Controls */
-body.mobile .topbar,
-@media (max-width: 768px) {
+/* Hide mobile controls when dialog/input modal is open to prevent overlapping */
+body.in-dialog #mobileControls,
+body:has(#dialog:not(.hidden)) #mobileControls,
+body:has(#directInputModal:not(.hidden)) #mobileControls,
+body:has(#resultsModal:not(.hidden)) #mobileControls {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Mobile HUD Top Actions (Always-Visible Exit Button & Menu FAB) */
+.mobile-hud-top-actions {
+  display: none;
+}
+
+.mobile-always-exit-btn {
+  display: none;
+}
+
+.mobile-menu-fab {
+  display: none;
+}
+
+.hud-mobile-close-btn {
+  display: none;
+}
+
+/* Mobile Responsive Layout & HUD Rules */
+@media (max-width: 768px), (pointer: coarse) {
   .topbar {
     padding: 6px 10px;
     gap: 6px;
@@ -1444,46 +1469,27 @@ body.mobile .topbar,
     font-size: 9.5px;
     padding: 2px 5px;
   }
-}
 
-/* Mobile HUD Top Actions (Always-Visible Exit Button & Menu FAB) */
-.mobile-hud-top-actions {
-  display: none;
-}
-
-.mobile-always-exit-btn {
-  display: none;
-}
-
-.mobile-menu-fab {
-  display: none;
-}
-
-.hud-mobile-close-btn {
-  display: none;
-}
-
-body.mobile .mobile-hud-top-actions,
-@media (max-width: 768px) {
+  /* Show Top Floating Mobile Actions: [観測終了(解析)] [☰ メニュー] */
   .mobile-hud-top-actions {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 6px;
     position: fixed;
     top: 48px;
     right: 10px;
-    z-index: 20;
+    z-index: 40;
   }
 
   .mobile-always-exit-btn {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     gap: 4px;
     background: linear-gradient(135deg, rgba(255, 60, 110, 0.45) 0%, rgba(255, 117, 200, 0.3) 100%);
     border: 1px solid rgba(255, 117, 200, 0.85);
     color: #fff;
-    padding: 5px 11px;
+    padding: 6px 11px;
     border-radius: 18px;
     font-family: var(--mono);
     font-size: 10.5px;
@@ -1502,14 +1508,14 @@ body.mobile .mobile-hud-top-actions,
   }
 
   .mobile-menu-fab {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     gap: 4px;
     background: rgba(9, 20, 36, 0.94);
     border: 1px solid var(--cyan);
     color: #fff;
-    padding: 5px 11px;
+    padding: 6px 11px;
     border-radius: 18px;
     font-family: var(--mono);
     font-size: 10.5px;
@@ -1543,8 +1549,9 @@ body.mobile .mobile-hud-top-actions,
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
+  /* Slide-out Drawer for HUD buttons on Mobile */
   .hud-right {
-    top: 86px;
+    top: 88px;
     bottom: auto;
     right: 10px;
     max-width: 210px;
@@ -1556,17 +1563,17 @@ body.mobile .mobile-hud-top-actions,
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(114, 246, 255, 0.2);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    transform: translateX(140%);
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(140%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-    z-index: 25;
+    z-index: 50;
   }
 
   body.mobile-menu-open .hud-right {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 
   .hud-right button {
@@ -1582,7 +1589,7 @@ body.mobile .mobile-hud-top-actions,
   .mission {
     left: 10px;
     top: 48px;
-    max-width: calc(100vw - 220px);
+    max-width: calc(100vw - 230px);
     padding: 4px 8px;
   }
 
@@ -1600,13 +1607,42 @@ body.mobile .mobile-hud-top-actions,
     display: none;
   }
 
+  /* Compact & Scrollable Dialog on Mobile */
   .dialog {
-    bottom: 10%;
-    left: 10px;
-    right: 10px;
-    max-width: calc(100vw - 20px);
-    padding: 14px;
+    bottom: 5% !important;
+    left: 8px !important;
+    right: 8px !important;
+    transform: none !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: 82vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 14px 16px !important;
+    z-index: 60;
   }
+
+  .dialog-actions {
+    max-height: 38vh;
+  }
+}
+
+/* Fallback for body.mobile class regardless of width */
+body.mobile .mobile-hud-top-actions {
+  display: flex;
+}
+body.mobile .mobile-always-exit-btn,
+body.mobile .mobile-menu-fab {
+  display: inline-flex;
+}
+body.mobile .hud-right {
+  transform: translateX(140%);
+  opacity: 0;
+  pointer-events: none;
+}
+body.mobile.mobile-menu-open .hud-right {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .highlight-exit-help {
@@ -2336,6 +2372,32 @@ body.mobile .mobile-hud-top-actions,
 .results-self-badge strong {
   color: #ffffff;
   font-weight: 700;
+}
+
+.results-gas-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(114, 246, 255, 0.1);
+  border: 1px solid rgba(114, 246, 255, 0.4);
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.results-gas-badge.success {
+  background: rgba(46, 213, 115, 0.15);
+  border-color: rgba(46, 213, 115, 0.5);
+  color: #2ed573;
+}
+
+.results-gas-badge.warning {
+  background: rgba(255, 177, 66, 0.15);
+  border-color: rgba(255, 177, 66, 0.5);
+  color: #ffb142;
 }
 
 /* モバイル対応調整 */
