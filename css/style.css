@@ -1398,16 +1398,91 @@ body.mobile #mobileControls {
   display: block;
 }
 
-body.mobile .hud-right {
-  top: auto;
-  bottom: 160px;
+/* Mobile Menu Toggle Button and Mobile Drawer */
+.mobile-menu-fab {
+  display: none;
+}
+
+.hud-mobile-close-btn {
+  display: none;
+}
+
+body.mobile .mobile-menu-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: fixed;
+  top: 56px;
   right: 14px;
-  max-width: 44vw;
+  z-index: 20;
+  background: rgba(9, 20, 36, 0.92);
+  border: 1px solid var(--cyan);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 10px rgba(114, 246, 255, 0.35);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+body.mobile.mobile-menu-open .mobile-menu-fab {
+  border-color: var(--pink);
+  color: #ff9ee2;
+  box-shadow: 0 0 14px rgba(255, 117, 200, 0.45);
+}
+
+body.mobile .hud-mobile-close-btn {
+  display: block !important;
+  background: rgba(255, 60, 110, 0.22) !important;
+  border: 1px solid rgba(255, 117, 200, 0.7) !important;
+  color: #ffc2eb !important;
+  padding: 9px 12px !important;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.mobile .hud-right {
+  top: 96px;
+  bottom: auto;
+  right: 14px;
+  max-width: 220px;
+  width: 200px;
+  background: rgba(6, 14, 28, 0.96);
+  border: 1px solid rgba(114, 246, 255, 0.45);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(114, 246, 255, 0.2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform: translateX(140%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  z-index: 25;
+}
+
+body.mobile.mobile-menu-open .hud-right {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 body.mobile .hud-right button {
-  font-size: 10px;
-  padding: 7px 10px;
+  font-size: 11px;
+  padding: 9px 12px;
+  width: 100%;
 }
 
 body.mobile .hud-left {
@@ -2689,4 +2764,54 @@ body.hud-hidden .hud-toggle-btn {
   background: rgba(255, 117, 200, 0.22);
   border-color: var(--pink);
   color: var(--pink);
+}
+
+/* Natsue Student ID Image & Neon Feed Photo Attachment */
+.student-id-display-card {
+  margin: 14px 0 8px 0;
+  background: rgba(8, 18, 34, 0.9);
+  border: 1px solid rgba(114, 246, 255, 0.4);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 10px rgba(114, 246, 255, 0.15);
+}
+
+.student-id-image {
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  object-fit: contain;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.student-id-caption {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--cyan);
+  margin: 0;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.post-image-attachment {
+  margin: 8px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(114, 246, 255, 0.3);
+  background: #000;
+  display: flex;
+  justify-content: center;
+}
+
+.post-attached-photo {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
 }

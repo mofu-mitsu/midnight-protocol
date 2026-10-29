@@ -133,10 +133,10 @@
     <span id="logCount" class="log-badge">LOG 000</span>
   </div>
   <div class="meter"><span id="meterFill"></span></div>
-  <div class="disc-preview-row">
-    <span id="discHint">行動傾向：未解析</span>
+  <div class="disc-preview-row hidden">
+    <span id="discHint">行動傾向：中央アーカイブサーバーで照合可能</span>
   </div>
-  <div class="disc-bars">
+  <div class="disc-bars hidden">
     <div class="disc-bar-row"><span class="d-label">D</span><div class="bar-track"><div id="barD" class="bar-fill d"></div></div><span id="valD" class="val">0%</span></div>
     <div class="disc-bar-row"><span class="i-label">I</span><div class="bar-track"><div id="barI" class="bar-fill i"></div></div><span id="valI" class="val">0%</span></div>
     <div class="disc-bar-row"><span class="s-label">S</span><div class="bar-track"><div id="barS" class="bar-fill s"></div></div><span id="valS" class="val">0%</span></div>
@@ -144,7 +144,10 @@
   </div>
 </div>
 
-<div class="hud-right">
+<button id="mobileMenuToggleBtn" class="mobile-menu-fab" aria-label="メニュー開閉">☰ メニュー</button>
+
+<div class="hud-right" id="hudRightPanel">
+  <button id="closeMobileMenuBtn" class="hud-mobile-close-btn hidden">✕ 閉じる</button>
   <button id="exitButton" class="hud-btn highlight-exit"><span class="icon">⏻</span> 観測終了（解析）</button>
   <button id="feedButton" class="hud-btn"><span class="icon">📱</span> ネオン・フィード</button>
   <button id="logButton" class="hud-btn"><span class="icon">▤</span> 行動ログ</button>

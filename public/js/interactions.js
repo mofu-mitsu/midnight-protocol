@@ -72,7 +72,7 @@ export function setupInteractions(camera) {
         ['「退屈なら、今すぐ私のペースに合わせてついて来なさい」と主導権を握る', { D: 2 }],
         ['「感情がログに漏れてるよ♡」とからかって笑わせる', { I: 2 }],
         ['甘えた猫なで声を優しく受け止め、静かに見守る', { S: 2 }],
-        ['「今のその反応、“本音”と“演出”どっち？」と論理分析する', { C: 2 }]
+        ['「からかうのはいいけれど、言葉の真意をちゃんと確かめたいな」', { C: 2 }]
       ];
       if (cityMemory.darlingIgnoredCount >= 1) {
         dialogueOpts.unshift(['「この前放置してごめんね」と謝る', { S: 2, I: 1 }]);
@@ -89,14 +89,14 @@ export function setupInteractions(camera) {
         ['「行くよ。雨の街をぐいぐい引っ張って案内してあげる」', { D: 2 }],
         ['「ネオン・フィードに私たちの夜の写真をアップしようよ！」', { I: 2 }],
         ['「少し冷えるね。雨宿りできる場所でも探しながら歩こう」', { S: 2 }],
-        ['「ここまでの観測データと雨の街の記憶構造を照合しよう」', { C: 2 }]
+        ['「焦らず、これまでの歩みと街で見つけた手がかりを整理しよう」', { C: 2 }]
       ];
     } else if (item.kind === 'bench') {
       dialogueOpts = [
         ['深く腰を下ろして息を整え、次に向かうべき交差点を直断する', { D: 2 }],
         ['『#雨宿りなう #深夜の第零区』とネオン・フィードに写真を共有する', { I: 2 }],
         ['雨音のホワイトノイズに包まれて静かに休む（雨宿り休憩）', { S: 2 }],
-        ['ベンチの木目と雨水の流動ベクトルを分析する', { C: 2 }]
+        ['濡れたベンチの座面を触り、座れる状態か慎重に確かめる', { C: 2 }]
       ];
     } else {
       dialogueOpts = getActionOptions(item);
@@ -417,7 +417,7 @@ export function setupInteractions(camera) {
         ['「退屈なら、今すぐ私のペースに合わせてついて来なさい」と主導権を握る', { D: 2 }],
         ['「感情がログに漏れてるよ♡」とからかって笑わせる', { I: 2 }],
         ['甘えた猫なで声を優しく受け止め、静かに見守る', { S: 2 }],
-        ['「今のその反応、“本音”と“演出”どっち？」と論理分析する', { C: 2 }]
+        ['「からかうのはいいけれど、言葉の真意をちゃんと確かめたいな」', { C: 2 }]
       ];
       if (cityMemory.darlingIgnoredCount >= 1) {
         opts.unshift(['「この前放置してごめんね」と謝る', { S: 2, I: 1 }]);
@@ -446,7 +446,7 @@ export function setupInteractions(camera) {
         observerFollow
           ? ['バイバイする（同行を解除）', { S: 1 }]
           : ['「一緒に歩かない？」と誘う（同行開始）', { S: 2, I: 1 }],
-        ['ここまでの観測データと雨の街の記憶構造を照合する', { C: 2 }]
+        ['焦らず、これまでの歩みと街で見つけた手がかりを整理する', { C: 2 }]
       ];
       addInventoryOptions(opts);
       addMissionInquiryOptions(opts);
@@ -509,10 +509,10 @@ export function setupInteractions(camera) {
 
     if (item.kind === 'interior_terminal') {
       return [
-        ['都市管理システムの根幹データベースを力づくでハックする', { D: 2 }],
+        ['【中間行動データ照合】現在蓄積されたログから行動特性（DISC暫定値）を照合する', { C: 2 }],
+        ['都市管理システムの根幹データベースをハックして全端末ログを照合する', { D: 2 }],
         ['被験体（自分）のリアルタイム行動ログをネオン・フィードにエクスポートする', { I: 2 }],
-        ['保管された都市の過去ログに敬意を払い、静かに閲覧・保存する', { S: 2 }],
-        ['DISC行動モデルの重み付け係数と相関マトリクスを精査する', { C: 2 }]
+        ['保管された都市の過去ログに敬意を払い、静かに閲覧・保存する', { S: 2 }]
       ];
     }
 
@@ -578,82 +578,6 @@ export function setupInteractions(camera) {
     }
 
     if (item.name === '忘失物ボックス') {
-      return [
-        ['箱のロックを解除し、中の「学生証とメモ」を即座に確保する', { D: 2 }],
-        ['『この学生証の持ち主探してます！拡散希望』とネオン・フィードに呼びかける', { I: 2 }],
-        ['持ち主が戻ることを祈り、周囲の住人に静かに聞き込みを始める', { S: 2 }],
-        ['学生証の印字フォント・発行年度・メモの筆跡データを精密解析する', { C: 2 }]
-      ];
-    }
-
-    const targetLabel = item.name || 'この地点';
-    return [
-      [`【直接突破】${targetLabel}の構造に迷わず直接介入し、状況を主導する`, { D: 2 }],
-      [`『${targetLabel}の周辺で異常なパルス観測！誰か見てる？』とフィードに実況する`, { I: 2 }],
-      [`【環境維持】${targetLabel}の周囲に危険がないか静かに見守り、安全を確保する`, { S: 2 }],
-      [`【構造解析】${targetLabel}の信号ログと物理波形データを照合して論理検証する`, { C: 2 }]
-    ];
-  }
-
-  function handleOptionClick(item, label, weights) {
-    previousTopics[item.name] = label;
-
-    if (label.includes('ミニゲーム') || label.includes('バイパス作業')) {
-      close();
-      window.dispatchEvent(new CustomEvent('start-minigame', {
-        detail: {
-          title: '高圧配線盤バイパス回路',
-          target: item.name,
-          onComplete: result => {
-            if (result.success) {
-              record('ミニゲーム達成', '配線バイパス成功（所要時間: ' + result.elapsed + '秒 / 試行ミス: ' + result.mistakes + '回）', {
-                D: result.elapsed < 8 ? 2 : 1,
-                C: result.mistakes === 0 ? 2 : 1,
-                S: result.elapsed >= 8 && result.mistakes === 0 ? 2 : 0
-              });
-              item.fixed = true;
-              item.name = '復旧済み配電盤（正常稼働中）';
-              item.type = '都市インフラ（正常）';
-              item.description = 'バイパス作業により正常化された配電盤。過熱も収まり、安定した青緑色の光を放っている。';
-              if (item.light) {
-                item.light.color.set(0x44ddaa);
-                item.light.intensity = 0.85;
-              }
-              anomaliesCleared++;
-              updateMemory('anomaliesFixed', 1);
-              toast('配電盤ガ正常復旧！電力システムガ安定シタ。');
-              checkMissionProgress();
-            } else {
-              record('ミニゲーム失敗', '配線バイパス失敗（過電流ショート発生 / 所要時間: ' + result.elapsed + '秒）', { D: 1, C: 1 });
-              toast('警告：過電流ショート発生！配電盤ノ復旧ニ失敗シタ。');
-            }
-          }
-        }
-      }));
-      return;
-    }
-
-    if (label.includes('カオスに突っ込む')) {
-      close();
-      record('カオス突入', '歪曲交差点の裂け目に直接突入（侵入継続）', { I: 3, D: 1 });
-      camera.position.x += (Math.random() - 0.5) * 6;
-      camera.position.z -= 6;
-      window.dispatchEvent(new CustomEvent('city-chaos'));
-      toast('LSI芋虫侵入群「境界線確保。侵入継続。感覚支配成功。🐛」');
-      return;
-    }
-
-    if (label.includes('近くのNPCを呼ぶ') || label.includes('最寄りの住人を呼び寄せる')) {
-      close();
-      record('NPC呼び出し', '交差点から最寄りの通行人に救援信号を発信', { I: 2, D: 1 });
-      window.dispatchEvent(new CustomEvent('npc-call-nearest', {
-        detail: { position: camera.position.clone() }
-      }));
-      toast('救援信号ヲ発信！最寄リノ住人ガ急行シテイマス……');
-      return;
-    }
-
-    if (item.name === '忘失物ボックス') {
       cityMemory.natsueReceiptFound = true;
       if (!inventory.includes('古い学生証（名前：夏江）')) {
         inventory.push('古い学生証（名前：夏江）');
@@ -661,9 +585,28 @@ export function setupInteractions(camera) {
       }
       unlockMission('M_NATSUE', '【緊急ミッション発生！】忘失物ノ調査：学生証ニ記サレタ「夏江」トイウ人物ノ行方ヲ追跡セヨ。');
       record('アイテム入手', '忘失物ボックスから「夏江」の古い学生証を発見・確保', weights);
-      let replyText = `古い学生証（名前：夏江）を入手した。\n都内の高校の学生証で、雨に濡れた写真の少女が微かに微笑んでいる。\n【緊急ミッション発生！】住人への聞き込みが可能になりました。`;
+      const studentCardHtml = '<div class="student-id-display-card"><img src="./profile.png" alt="古い学生証（夏江）" class="student-id-image" /><p class="student-id-caption">【現物スキャン】都立高校 学生証（氏名：夏江）</p></div>';
+      let replyText = `古い学生証（名前：夏江）を入手した。
+都内の高校の学生証で、雨に濡れた写真の少女が微かに微笑んでいる。
+【緊急ミッション発生！】住人への聞き込みが可能になりました。
+${studentCardHtml}`;
       if (label.includes('祈り') || label.includes('聞き込み') || label.includes('持ち主')) {
-        replyText = `忘失物ボックスから、濡れたまま取り残されていた「古い学生証（名前：夏江）」を丁寧に預かった。\n持ち主の少女の無事を祈り、周囲の住人に心当たりを聞き込み調査する決意を固める。\n【緊急ミッション発生！】街の住人に持ち主の心当たりを聞き込みできるようになりました。`;
+        replyText = `忘失物ボックスから、濡れたまま取り残されていた「古い学生証（名前：夏江）」を丁寧に預かった。
+持ち主の少女の無事を祈り、周囲の住人に心当たりを聞き込み調査する決意を固める。
+【緊急ミッション発生！】街の住人に持ち主の心当たりを聞き込みできるようになりました。
+${studentCardHtml}`;
+      }
+      if (label.includes('ネオン・フィード')) {
+        replyText = `『この学生証の持ち主探してます！拡散希望』とネオン・フィードに学生証の画像を添付して呼びかけた。
+都民ネットワークへ画像が送信され、拡散されています。
+${studentCardHtml}`;
+        window.dispatchEvent(new CustomEvent('neon-feed-post-external', {
+          detail: {
+            text: `『この学生証の持ち主探してます！拡散希望』\n忘失物ボックスに濡れた高校の学生証（夏江）が残されていました。心当たりのある方、教えてください！ #夏江捜索 #第零区`,
+            location: '第零区・忘失物ボックス前',
+            image: './profile.png'
+          }
+        }));
       }
       showDialogResult(item, label, replyText, weights);
       return;
@@ -977,6 +920,22 @@ export function setupInteractions(camera) {
       return;
     }
 
+    // 中央アーカイブサーバーの中間DISCデータ照合
+    if (item.kind === 'interior_terminal' && (label.includes('中間行動データ') || label.includes('DISC暫定値'))) {
+      const summary = getSummary();
+      const text = `【中央アーカイブサーバー：リアルタイムDISC解析】\n` +
+        `■ 累積行動ログ数: ${analysis.actions} 件\n` +
+        `■ 現在の最優位特性: ${summary.leader.key}型（${summary.leader.label}）\n` +
+        `・D (主導性): ${summary.raw.D.toFixed(1)} pt (${summary.entries.find(e => e.key === 'D')?.pct}%)\n` +
+        `・I (感化性): ${summary.raw.I.toFixed(1)} pt (${summary.entries.find(e => e.key === 'I')?.pct}%)\n` +
+        `・S (安定性): ${summary.raw.S.toFixed(1)} pt (${summary.entries.find(e => e.key === 'S')?.pct}%)\n` +
+        `・C (慎重性): ${summary.raw.C.toFixed(1)} pt (${summary.entries.find(e => e.key === 'C')?.pct}%)\n\n` +
+        `※街の探索中は行動への先入観（バイアス）を防ぐためHUDを非表示化しています。最終結果は「観測終了」時に詳細証明書として発行されます。`;
+      record('データ照合', '中央アーカイブサーバーでDISC中間解析を照合閲覧', weights);
+      showDialogResult(item, label, text, weights);
+      return;
+    }
+
     // 暴走信号機の修復
     if (item.kind === 'anomaly_signal' && (label.includes('リセット') || label.includes('論理エラー') || label.includes('特定') || label.includes('強制'))) {
       if (!item.fixed) {
@@ -1236,41 +1195,57 @@ export function setupInteractions(camera) {
   }
 
   function setupDirectInputSend(modal, _inputEl, callback) {
-    const choicesEl = document.getElementById('dialogActions');
+    const choicesEl = document.getElementById("dialogActions");
     if (!choicesEl) return;
+    const wrap = document.createElement("div");
+    wrap.className = "custom-direct-input-wrap";
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.gap = "8px";
+    wrap.style.marginTop = "10px";
+    wrap.style.width = "100%";
 
-    const wrap = document.createElement('div');
-    wrap.style.display = 'flex';
-    wrap.style.gap = '8px';
-    wrap.style.marginTop = '8px';
-    wrap.style.width = '100%';
+    const textarea = document.createElement("textarea");
+    textarea.placeholder = "自由に返答を入力（Enterで改行、送信ボタンで確定）...";
+    textarea.rows = 2;
+    textarea.style.width = "100%";
+    textarea.style.background = "rgba(7, 16, 32, 0.95)";
+    textarea.style.border = "1px solid var(--cyan)";
+    textarea.style.borderRadius = "6px";
+    textarea.style.padding = "10px 12px";
+    textarea.style.color = "#fff";
+    textarea.style.fontFamily = "inherit";
+    textarea.style.fontSize = "13px";
+    textarea.style.lineHeight = "1.5";
+    textarea.style.resize = "vertical";
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = '自由に返答を入力（Enterで送信）...';
-    input.style.flex = '1';
-    input.style.background = 'rgba(7, 16, 32, 0.9)';
-    input.style.border = '1px solid var(--cyan)';
-    input.style.borderRadius = '4px';
-    input.style.padding = '8px 12px';
-    input.style.color = '#fff';
+    const btnBar = document.createElement("div");
+    btnBar.style.display = "flex";
+    btnBar.style.justifyContent = "flex-end";
 
-    const btn = document.createElement('button');
-    btn.textContent = '送信 ↵';
-    btn.style.padding = '8px 16px';
-    btn.style.borderColor = 'var(--cyan)';
+    const btn = document.createElement("button");
+    btn.className = "send-btn";
+    btn.textContent = "【この内容で返答を送信する ↵】";
+    btn.style.padding = "8px 18px";
+    btn.style.background = "rgba(114, 246, 255, 0.2)";
+    btn.style.border = "1px solid var(--cyan)";
+    btn.style.color = "#fff";
+    btn.style.borderRadius = "4px";
+    btn.style.fontWeight = "bold";
+    btn.style.cursor = "pointer";
 
-    const send = () => {
-      const val = input.value.trim();
-      if (!val) return;
+    const doSend = () => {
+      const val = textarea.value.trim();
+      if (!val) {
+        toast("返答内容を入力してください。");
+        return;
+      }
       callback(val);
     };
-    btn.addEventListener('click', send);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') send();
-    });
 
-    wrap.append(input, btn);
+    btn.addEventListener("click", doSend);
+    btnBar.append(btn);
+    wrap.append(textarea, btnBar);
     choicesEl.append(wrap);
   }
 
@@ -1752,9 +1727,9 @@ export function setupInteractions(camera) {
           reply: '観測者「……ありがとう。その優しさ、すごく温かいよ。でも、あなたにはいつかちゃんと名乗りたいな。」'
         },
         {
-          label: '「都民台帳の記録データと照合する」',
+          label: '「……自分で決めたことなら、聞かせてほしい」',
           weights: { C: 3 },
-          reply: '夏江「ふふ、データ照合なんだ。でも、記録よりもあなたに覚えていてもらえる方が、ずっと安心するな。」'
+          reply: '夏江「私の名前は、夏江。自分からあなたに伝えたかったんだ。誰かに名前を見つけてもらうのと、自分から名乗るのって……同じじゃないんだね」'
         }
       ];
       choices.forEach(c => {
@@ -1793,9 +1768,9 @@ export function setupInteractions(camera) {
           reply: '夏江「……そっか。じゃあ、覚えときなさいよ。この街にいた、私のこと。私が何者だったか、ちゃんと説明できなくてもいいから。……ここにいたことくらい、覚えときなさいよ。」'
         },
         {
-          label: '「観測ログの不揮発性領域に完全保存した」',
+          label: '「忘れないように、君と過ごした時間を覚えておきたい」',
           weights: { C: 3 },
-          reply: '夏江「不揮発性メモリ……ふふ、都民らしい記録の仕方。消えないなら、それでいいよ。」'
+          reply: '夏江「……そっか。私が何を話したか、どんな景色を一緒に見たか。そういうのも、私のことなんだね。……ふふ。じゃあ、ちゃんと覚えときなさいよ。」'
         }
       ];
       choices.forEach(c => {
@@ -1858,7 +1833,7 @@ export function setupInteractions(camera) {
             }
           },
           {
-            label: '「パンの糖分と深夜の覚醒作用を計算する」',
+            label: '「深夜の買い食いも魅力的だけど、明日の生活リズムも考えておきたいな」',
             weights: { C: 3 },
             action: () => {
               return `${name}「ふふ、カロリー計算？ でも夜中に食べる甘いものって、計算できないくらい心を満たしてくれるよ。」`;
@@ -1894,7 +1869,7 @@ export function setupInteractions(camera) {
             reply: `${name}「うん……この静けさも、すごく贅沢な時間だよね。」`
           },
           {
-            label: '「自販機の賞味期限と補充サイクルを推測する」',
+            label: '「夜中に焦って買うより、落ち着ける場所を確かめてからにしよう」',
             weights: { C: 3 },
             reply: `${name}「補充サイクル……ふふ、都民らしい観察眼だね。」`
           }
@@ -1930,7 +1905,7 @@ export function setupInteractions(camera) {
           reply: `${name}「……！ 私に聞くんだ。いつも、私がどう思うかなんて誰にも聞かれたことなかったから……嬉しいよ。」`
         },
         {
-          label: '「ビル群の照度と電力効率を分析する」',
+          label: '「光の綺麗さよりも、この街が維持されている仕組みや理由が気になる」',
           weights: { C: 3 },
           reply: `${name}「オシロスコープみたいな目で街を見てるんだね。でも、その冷静さが頼もしいよ。」`
         }
@@ -1965,7 +1940,7 @@ export function setupInteractions(camera) {
           reply: `${name}「……うん。分からないままでも、この雨の街に立っていていいんだね。」`
         },
         {
-          label: '「属性と自己同一性の論理的矛盾を整理しよう」',
+          label: '「他人が貼るレッテルよりも、自分自身が誠実でいられるかどうかが大切だと思う」',
           weights: { C: 3 },
           reply: `${name}「命題として分解するんだね。理屈で考えると、少し頭がすっきりするかも。」`
         }
@@ -1987,7 +1962,7 @@ export function setupInteractions(camera) {
         { text: '「行くよ、街を引っ張って案内する」', weights: { D: 3 } },
         { text: '「写真撮ってフィードに載せよう」', weights: { I: 3 } },
         { text: '「雨が静かで落ち着くね」', weights: { S: 3 } },
-        { text: '「雨天のノイズ波形を解析してみよう」', weights: { C: 3 } }
+        { text: '「言葉が出ないなら、無理に話さず静かに雨を見つめていてもいいよ」', weights: { C: 3 } }
       ];
       shortcuts.forEach(s => {
         const b = document.createElement('button');
@@ -2118,6 +2093,8 @@ export function setupInteractions(camera) {
     const tapRay = new THREE.Raycaster();
     tapRay.setFromCamera(mouse, camera);
 
+    let tappedTarget = null;
+
     // 1. Check if an NPC agent was tapped
     for (const agent of npcAgents) {
       if (!agent.interactable || !agent.object) continue;
@@ -2131,65 +2108,91 @@ export function setupInteractions(camera) {
       const distToRay = closestPoint.distanceTo(agentPos.clone().add(new THREE.Vector3(0, 1.0, 0)));
 
       if (distToRay < 1.45) {
-        if (focusedTarget === agent) {
-          // 2nd tap: Open dialogue!
-          open(agent.interactable);
-          focusedTarget = null;
-          clearTimeout(focusedTargetTimer);
-        } else {
-          // 1st tap: NPC pauses and turns to face player
-          focusedTarget = agent;
-          agent.wait = 20;
-          agent.walking = false;
-          const dx = camera.position.x - agent.object.position.x;
-          const dz = camera.position.z - agent.object.position.z;
-          agent.object.rotation.y = Math.atan2(dx, dz) + (agent.kind === 'caterpillar' || agent.kind === 'observer' ? Math.PI : 0);
-          const name = (agent.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : agent.name;
-          toast('（' + name + 'が足を止め、こちらを向いた。もう一度タップで話しかける）');
-          current = agent.interactable;
-          interact.classList.remove('hidden');
-          document.getElementById('targetType').textContent = agent.interactable.type;
-          document.getElementById('targetName').textContent = name;
-          document.getElementById('targetHint').textContent = 'もう一度タップで対話開始';
-          clearTimeout(focusedTargetTimer);
-          focusedTargetTimer = setTimeout(() => {
-            if (focusedTarget === agent) focusedTarget = null;
-          }, 5000);
-        }
-        return;
+        tappedTarget = agent;
+        break;
       }
     }
 
-    // 2. Check if an interactable object was tapped
-    for (const item of interactables) {
-      if (item.kind === 'darling' || item.kind === 'caterpillar' || item.kind === 'observer') continue;
-      if (camera.position.distanceTo(item.position) > 8.0) continue;
+    // 2. Check if an interactable object was tapped if no NPC
+    if (!tappedTarget) {
+      for (const item of interactables) {
+        if (item.kind === 'darling' || item.kind === 'caterpillar' || item.kind === 'observer') continue;
+        if (camera.position.distanceTo(item.position) > 8.0) continue;
 
-      const vToItem = item.position.clone().add(new THREE.Vector3(0, 0.8, 0)).sub(camera.position);
-      const proj = vToItem.dot(tapRay.ray.direction);
-      if (proj <= 0) continue;
-      const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
-      const distToRay = closestPoint.distanceTo(item.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
+        const vToItem = item.position.clone().add(new THREE.Vector3(0, 0.8, 0)).sub(camera.position);
+        const proj = vToItem.dot(tapRay.ray.direction);
+        if (proj <= 0) continue;
+        const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
+        const distToRay = closestPoint.distanceTo(item.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
 
-      if (distToRay < 1.55) {
-        if (focusedTarget === item) {
-          open(item);
-          focusedTarget = null;
-          clearTimeout(focusedTargetTimer);
-        } else {
-          focusedTarget = item;
-          toast();
-          current = item;
-          interact.classList.remove('hidden');
-          document.getElementById('targetType').textContent = item.type;
-          document.getElementById('targetName').textContent = item.name;
-          document.getElementById('targetHint').textContent = 'もう一度タップで調査開始';
-          clearTimeout(focusedTargetTimer);
-          focusedTargetTimer = setTimeout(() => {
-            if (focusedTarget === item) focusedTarget = null;
-          }, 5000);
+        if (distToRay < 1.55) {
+          tappedTarget = item;
+          break;
         }
-        return;
+      }
+    }
+
+    if (tappedTarget) {
+      if (focusedTarget === tappedTarget) {
+        // 2回目のタップ：対話・調査を開始
+        if (tappedTarget.interactable) {
+          open(tappedTarget.interactable);
+        } else {
+          open(tappedTarget);
+        }
+        focusedTarget = null;
+        clearTimeout(focusedTargetTimer);
+      } else {
+        // 別の対象が注視されていた場合はまず歩行再開
+        if (focusedTarget && focusedTarget.wait !== undefined) {
+          focusedTarget.wait = 0;
+          focusedTarget.walking = true;
+        }
+        // 1回目のタップ：対象を注視し、NPCの場合は足を止めてこちらを向く
+        focusedTarget = tappedTarget;
+        if (tappedTarget.object) {
+          tappedTarget.wait = 25;
+          tappedTarget.walking = false;
+          const dx = camera.position.x - tappedTarget.object.position.x;
+          const dz = camera.position.z - tappedTarget.object.position.z;
+          tappedTarget.object.rotation.y = Math.atan2(dx, dz) + (tappedTarget.kind === 'caterpillar' || tappedTarget.kind === 'observer' ? Math.PI : 0);
+          const name = (tappedTarget.kind === 'observer' && cityMemory.natsueNameRevealed) ? '夏江' : tappedTarget.name;
+          toast('（' + name + 'が足を止め、こちらを向いた。もう一度タップで話しかける）');
+          current = tappedTarget.interactable;
+          interact.classList.remove('hidden');
+          document.getElementById('targetType').textContent = tappedTarget.interactable.type;
+          document.getElementById('targetName').textContent = name;
+          document.getElementById('targetHint').textContent = 'もう一度タップで対話開始';
+        } else {
+          toast('（' + tappedTarget.name + 'を視認。もう一度タップで調査・介入）');
+          current = tappedTarget;
+          interact.classList.remove('hidden');
+          document.getElementById('targetType').textContent = tappedTarget.type;
+          document.getElementById('targetName').textContent = tappedTarget.name;
+          document.getElementById('targetHint').textContent = 'もう一度タップで調査開始';
+        }
+        clearTimeout(focusedTargetTimer);
+        focusedTargetTimer = setTimeout(() => {
+          if (focusedTarget === tappedTarget) {
+            if (focusedTarget.wait !== undefined) {
+              focusedTarget.wait = 0;
+              focusedTarget.walking = true;
+            }
+            focusedTarget = null;
+          }
+        }, 7000);
+      }
+    } else {
+      // 画面の別の場所をタップ：注視・振り向きを解除してNPCの歩行を再開
+      if (focusedTarget) {
+        if (focusedTarget.wait !== undefined) {
+          focusedTarget.wait = 0;
+          focusedTarget.walking = true;
+        }
+        focusedTarget = null;
+        clearTimeout(focusedTargetTimer);
+        interact.classList.add('hidden');
+        toast('（注視を解除しました）');
       }
     }
   });

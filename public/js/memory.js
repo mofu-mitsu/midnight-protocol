@@ -46,7 +46,7 @@ export function getRelationshipStatus() {
   let darlingLevel = Math.min(5, Math.floor(cityMemory.darlingAffection / 2) + (cityMemory.darlingQuestCompleted ? 2 : 0) + (cityMemory.darlingSpentTimeCount >= 1 ? 1 : 0));
   let darlingStatus = '観察と演出の対象';
   if (cityMemory.darlingQuestCompleted) darlingStatus = '特別なおねだりを聞いた仲♡ (親愛度 ★★★★★)';
-  else if (cityMemory.darlingSpentTimeCount >= 1 && cityMemory.darlingAffection >= 3) darlingStatus = '本音を語る仲 (親愛度 ★★★★☆)';
+  else if (cityMemory.darlingSpentTimeCount >= 1 && cityMemory.darlingAffection >= 3) darlingStatus = '阿波弁で本音を語る仲 (親愛度 ★★★★☆)';
   else if (cityMemory.darlingAffection >= 2) darlingStatus = '気になる観測者 (親愛度 ★★★☆☆)';
   else if (cityMemory.darlingIgnoredCount >= 2) darlingStatus = '放置された記憶（恨み・からかい）';
 

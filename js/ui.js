@@ -27,6 +27,36 @@ export function setupUI(interactions) {
 
   setupNeonFeed(interactions);
 
+  // Mobile Collapsible Menu Controls
+  const mobileMenuToggleBtn = document.getElementById('mobileMenuToggleBtn');
+  const closeMobileMenuBtn = document.getElementById('closeMobileMenuBtn');
+
+  function toggleMobileMenu(forceOpen) {
+    const willOpen = forceOpen !== undefined ? forceOpen : !document.body.classList.contains('mobile-menu-open');
+    document.body.classList.toggle('mobile-menu-open', willOpen);
+    if (mobileMenuToggleBtn) {
+      mobileMenuToggleBtn.textContent = willOpen ? '✕ メニュー閉じる' : '☰ メニュー';
+    }
+  }
+
+  mobileMenuToggleBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileMenu();
+  });
+
+  closeMobileMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileMenu(false);
+  });
+
+  document.querySelectorAll('.hud-right .hud-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (document.body.classList.contains('mobile')) {
+        toggleMobileMenu(false);
+      }
+    });
+  });
+
   const hudToggleBtn = document.getElementById('hudToggleButton');
   hudToggleBtn?.addEventListener('click', () => {
     document.body.classList.toggle('hud-hidden');
@@ -210,37 +240,37 @@ function setup3DVending(interactions) {
     {
       name: '深夜エスプレッソ',
       color: 0xff9900,
-      effect: '漆黒の濃縮珈琲。直断力と覚醒を促進 [D主導]',
+      effect: '漆黒の濃縮珈琲。直断力と覚醒を促進',
       weights: { D: 2 }
     },
     {
       name: '夜光ソーダ',
       color: 0x33e5ff,
-      effect: '青い微発泡。知覚と論理分析力を研ぎ澄ます [C慎重]',
+      effect: '青い微発泡。知覚と論理分析力を研ぎ澄ます',
       weights: { C: 2 }
     },
     {
       name: '桃色ミルク',
       color: 0xff66cc,
-      effect: '濃厚な甘み。感情の交流と共鳴が広がる [I感化]',
+      effect: '濃厚な甘み。感情の交流と共鳴が広がる',
       weights: { I: 2 }
     },
     {
       name: '星屑ウォーター',
       color: 0xaaffdd,
-      effect: '純度の高い天体蒸留水。静穏と落ち着き [S安定]',
+      effect: '純度の高い天体蒸留水。静穏と落ち着き',
       weights: { S: 2 }
     },
     {
       name: '夜のチョココロネ',
       color: 0x6e3d16,
-      effect: '深夜の買い食い定番菓子パン。懐かしい甘みと衝動 [I感化・D主導]',
+      effect: '深夜の買い食い定番菓子パン。懐かしい甘みと衝動',
       weights: { I: 1, D: 1 }
     },
     {
       name: 'シュガーデニッシュ',
       color: 0xee9933,
-      effect: '夜風に溶ける甘いデニッシュ。規則的なやすらぎ [S安定・C慎重]',
+      effect: '夜風に溶ける甘いデニッシュ。規則的なやすらぎ',
       weights: { S: 1, C: 1 }
     }
   ];
@@ -635,6 +665,17 @@ function setupNeonFeed(interactions) {
       body.textContent = p.text;
       card.append(body);
 
+      if (p.image) {
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'post-image-attachment';
+        const img = document.createElement('img');
+        img.src = p.image;
+        img.alt = '添付画像';
+        img.className = 'post-attached-photo';
+        imgWrap.append(img);
+        card.append(imgWrap);
+      }
+
       const actions = document.createElement('div');
       actions.className = 'post-interaction-bar';
 
@@ -691,7 +732,7 @@ function setupNeonFeed(interactions) {
   });
 
   // Post Submission with Reactive NPC Comments
-  function submitPost(text, location = '第零区・観測地点') {
+  function submitPost(text, location = '第零区・観測地点', image = null) {
     if (!text || !text.trim()) return;
     const newPost = {
       id: 'f_' + Date.now(),
@@ -701,6 +742,7 @@ function setupNeonFeed(interactions) {
       time: 'たった今',
       text: text.trim(),
       location,
+      image,
       likes: Math.floor(Math.random() * 20 + 8),
       reposts: Math.floor(Math.random() * 8 + 1),
       liked: false
@@ -781,8 +823,18 @@ function setupNeonFeed(interactions) {
   window.addEventListener('neon-feed', e => {
     const text = e.detail?.text;
     const loc = e.detail?.location || '第零区・観測地点';
+    const img = e.detail?.image || null;
     if (text) {
-      submitPost(text, loc);
+      submitPost(text, loc, img);
+    }
+  });
+
+  window.addEventListener('neon-feed-post-external', e => {
+    const text = e.detail?.text;
+    const loc = e.detail?.location || '第零区・忘失物ボックス前';
+    const img = e.detail?.image || null;
+    if (text) {
+      submitPost(text, loc, img);
     }
   });
 

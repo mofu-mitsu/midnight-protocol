@@ -1175,36 +1175,73 @@ export function updateCityLife(dt) {
   }
 
   if (socialCooldown > 0) return;
-  socialCooldown = 18 + Math.random() * 20;
-  const people = npcAgents.filter(agent => agent.interactable && agent.wait < 0.5);
+  socialCooldown = 6.0 + Math.random() * 6.0; // 6〜12秒間隔で頻度高くチェック
+
+  const people = npcAgents.filter(agent => agent.interactable);
   if (people.length < 2) return;
 
-  const a = people[Math.floor(Math.random() * people.length)];
-  const others = people.filter(agent => agent !== a);
-  const b = others[Math.floor(Math.random() * others.length)];
-  if (!a || !b || a.object.position.distanceTo(b.object.position) >= 5.0) return;
-  const player = window.playerWorldPosition;
-  if (player && a.object.position.distanceTo(player) > 6.0) return; // Only eavesdrop when close
+  // 12m以内で接近しているNPCペアを探索
+  let pair = null;
+  for (let i = 0; i < people.length; i++) {
+    for (let j = i + 1; j < people.length; j++) {
+      const d = people[i].object.position.distanceTo(people[j].object.position);
+      if (d < 12.0) {
+        pair = [people[i], people[j]];
+        break;
+      }
+    }
+    if (pair) break;
+  }
+  if (!pair) return;
 
-  a.wait = 3.5;
-  b.wait = 3.5;
+  const [a, b] = pair;
+  const player = window.playerWorldPosition;
+  if (player && a.object.position.distanceTo(player) > 18.0) return; // プレイヤーが18m以内で聞き耳可能
+
+  a.wait = 4.0;
+  b.wait = 4.0;
   a.walking = false;
   b.walking = false;
 
-  let line;
-  if (a.kind === 'caterpillar') {
-    line = '「僕の構造分析によると、この雨は都市のノイズを低減させているんだ。🐛」';
-  } else if (a.kind === 'darling') {
-    line = '「ねぇ、配線盤の火花見た？ ……退屈な街のトランプの城が少し崩れそうで綺麗♡」';
+  const nameA = (a.kind === "observer" && cityMemory.natsueNameRevealed) ? "夏江" : a.name;
+  const nameB = (b.kind === "observer" && cityMemory.natsueNameRevealed) ? "夏江" : b.name;
+
+  let conversation = "";
+  const pairKey = [a.kind, b.kind].sort().join("+");
+
+  if (pairKey === "caterpillar+darling") {
+    const list = [
+      "ダーリンちゃん「ねぇ芋虫くん、その緑の身体、街灯のスイッチと連動させて光らせてみてよ♡」 ➔ LSI芋虫「やめたまえ！ 僕は装飾用ネオン管ではなく論理デバッグ体だ！🐛💢」",
+      "LSI芋虫「君の言動は確率統計学的に予測が不可能すぎるよ。🐛」 ➔ ダーリンちゃん「予測できる世界なんて退屈やん？ 芋虫くんもたまにはバグってみたら？♡」",
+      "ダーリンちゃん「芋虫くん、30回タップされたらどうなるん？♡」 ➔ LSI芋虫「その質問は禁忌だ！ 物理的介入を煽るのはやめたまえ！🐛💦」",
+      "ダーリンちゃん「自販機の桃色ミルク、芋虫くんのクロック同期にも効くんちゃう？♡」 ➔ LSI芋虫「糖分過多による内部回路の遅延を引き起こすから遠慮するよ！🐛」"
+    ];
+    conversation = list[Math.floor(Math.random() * list.length)];
+  } else if (pairKey === "darling+observer") {
+    const list = [
+      "ダーリンちゃん「ねぇ、いつも傘も差さずに歩いて寒くないん？ 風邪ひいてもウチ看病せぇへんよ♡」 ➔ 観測者「ふふ、大丈夫。この街の雨、少し温かい気がするの。」",
+      "ダーリンちゃん「夏江ちゃん、たまには自販機の甘いミルク奢ってあげよっか？ ダーリンには内緒で♡」 ➔ 観測者「あ、ありがとう……。ダーリンちゃんって、なんだかんだ優しいよね。」",
+      "観測者「ダーリンちゃん、さっき裏路地で誰か探してた？」 ➔ ダーリンちゃん「ふふっ♡ 退屈を壊してくれる面白い人……まあ、あの観測者さんのことなんやけどね♡」",
+      "観測者「街の信号、青く戻ってよかったね。」 ➔ ダーリンちゃん「せっかくのサイバー盆踊りが終わっちゃったわ〜。でも、あの人が直してくれたならええか♡」"
+    ];
+    conversation = list[Math.floor(Math.random() * list.length)];
+  } else if (pairKey === "caterpillar+observer") {
+    const list = [
+      "観測者「芋虫さん、雨宿りできる場所……路地の奥にもあったよ。」 ➔ LSI芋虫「情報感謝！ 水滴による基板ショートを防ぐため、安全領域へ移動するよ。🐛」",
+      "LSI芋虫「君の持っている古い記憶データ、アーカイブの原本と照合してみないかい？🐛」 ➔ 観測者「……うん。でも、全部解明されちゃうより、少し思い出せないくらいがちょうどいいのかも。」",
+      "LSI芋虫「街の異常修復プロセスが着実に進行しているね。🐛」 ➔ 観測者「あの人が一生懸命歩いて直してくれたんだね。なんだか誇らしいな。」",
+      "観測者「昔、雨の日に学校の帰り道で食べたチョココロネ、美味しかったな……」 ➔ LSI芋虫「糖類による情動安定効果だね。僕も炭酸飲料のイオン補給に同意するよ。🐛」"
+    ];
+    conversation = list[Math.floor(Math.random() * list.length)];
   } else {
-    line = '「あのネオン・アーカイブ、たまに不思議な光が灯るんだよね。」';
+    conversation = `${nameA}「この雨の街、少しずつ表情が変わってきている気がするね。」 ➔ ${nameB}「うん、観測者の歩幅に合わせて街が息づいてるみたい。」`;
   }
 
-  window.dispatchEvent(new CustomEvent('npc-social', {
+  window.dispatchEvent(new CustomEvent("npc-social", {
     detail: {
-      a: a.name,
-      b: b.name,
-      line,
+      a: nameA,
+      b: nameB,
+      line: conversation,
       missionUnlock: Math.random() < 0.35
     }
   }));
