@@ -29,7 +29,6 @@ export function setupControls(camera, renderer) {
     // モーダルを開く直前に触っていたジョイスティック入力をリセットする。
     if (modalOpen) {
       stick = { x: 0, y: 0 };
-      if (knob) knob.style.transform = 'translate(0px,0px)';
     }
   };
   if (mobileControls) {
