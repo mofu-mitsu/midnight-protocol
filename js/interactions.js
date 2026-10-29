@@ -2109,7 +2109,8 @@ ${studentCardHtml}`;
   }
 
   function close() {
-    document.body.classList.remove('in-dialog');
+    // 会話終了時は、会話状態とモバイル操作UIの非表示状態を必ず解除する。
+    document.body.classList.remove('in-dialog', 'modal-controls-suppressed');
     document.getElementById('dialog')?.classList.add('hidden');
     document.getElementById('directInputModal')?.classList.add('hidden');
     if (activeApproachingNpc) {
