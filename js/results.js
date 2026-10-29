@@ -106,7 +106,8 @@ export class ResultsController {
   setupListeners() {
     // 観測終了ボタン
     const triggerButtons = [
-      document.getElementById('exitButton')
+      document.getElementById('exitButton'),
+      document.getElementById('mobileAlwaysExitBtn')
     ];
     triggerButtons.forEach(btn => {
       btn?.addEventListener('click', () => this.showExitConfirmation());

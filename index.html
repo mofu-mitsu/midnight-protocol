@@ -127,7 +127,7 @@
   </div>
 </div>
 
-<div class="hud-left">
+<div class="hud-left hidden">
   <div class="hud-label-row">
     <span class="hud-label">OBSERVATION LOG</span>
     <span id="logCount" class="log-badge">LOG 000</span>
@@ -144,7 +144,10 @@
   </div>
 </div>
 
-<button id="mobileMenuToggleBtn" class="mobile-menu-fab" aria-label="メニュー開閉">☰ メニュー</button>
+<div class="mobile-hud-top-actions">
+  <button id="mobileAlwaysExitBtn" class="mobile-always-exit-btn" aria-label="観測終了"><span class="icon">⏻</span> 観測終了</button>
+  <button id="mobileMenuToggleBtn" class="mobile-menu-fab" aria-label="メニュー開閉">☰ メニュー</button>
+</div>
 
 <div class="hud-right" id="hudRightPanel">
   <button id="closeMobileMenuBtn" class="hud-mobile-close-btn hidden">✕ 閉じる</button>
@@ -285,6 +288,10 @@
     <strong>都市観測マニュアル</strong>
     <button data-close="helpPanel">×</button>
   </div>
+  <div class="help-section highlight-exit-help">
+    <h4>⏻ 観測終了と解析結果</h4>
+    <p>都市の探索・対話・調査に満足したら、いつでも画面上部の<b>「⏻ 観測終了」ボタン</b>を押してください。これまでのすべての行動ログから客観的なDISC行動モデルが解析され、詳細証明書が発行されます。</p>
+  </div>
   <div class="help-section">
     <h4>PC操作</h4>
     <p><b>WASD / 矢印キー</b>：移動<br>
@@ -297,7 +304,9 @@
     <h4>スマートフォン操作</h4>
     <p><b>左下スティック</b>：移動<br>
     <b>右側スワイプ</b>：視点操作<br>
-    <b>「調べる」ボタン</b>：アクション</p>
+    <b>対象をタップ</b>：1回タップで注視・足止め（画面の別場所タップで解除）、<b>2回タップ</b>で直接対話・調査・施設利用！<br>
+    <b>「調べる」ボタン</b>：正面の対象とアクション<br>
+    <b>「⏻ 観測終了」ボタン</b>：常時表示からいつでも行動解析へ移行</p>
   </div>
   <div class="help-section">
     <h4>都市があなたを記憶する</h4>

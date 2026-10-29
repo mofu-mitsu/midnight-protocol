@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { interactables, LOCATIONS, npcAgents, scene } from './world.js';
-import { record } from './analysis.js';
+import { record, getSummary, analysis } from './analysis.js';
 import { cityMemory, updateMemory } from './memory.js';
 
 let active = null;
@@ -577,6 +577,82 @@ export function setupInteractions(camera) {
       ];
     }
 
+    if (item.name === '忘失物ボックス' || item.kind === 'lost_box') {
+      return [
+        ['箱のロックを解除し、中の「学生証とメモ」を即座に確保する', { D: 2 }],
+        ['『この学生証の持ち主探してます！拡散希望』とネオン・フィードに呼びかける', { I: 2 }],
+        ['持ち主が戻ることを祈り、周囲の住人に静かに聞き込みを始める', { S: 2 }],
+        ['学生証の印字フォント・発行年度・メモの筆跡データを精密解析する', { C: 2 }]
+      ];
+    }
+
+    const targetLabel = item.name || 'この地点';
+    return [
+      [`【直接突破】${targetLabel}の構造に迷わず直接介入し、状況を主導する`, { D: 2 }],
+      [`『${targetLabel}の周辺で異常なパルス観測！誰か見てる？』とフィードに実況する`, { I: 2 }],
+      [`【環境維持】${targetLabel}の周囲に危険がないか静かに見守り、安全を確保する`, { S: 2 }],
+      [`【構造解析】${targetLabel}の信号ログと物理波形データを照合して論理検証する`, { C: 2 }]
+    ];
+  }
+
+  function handleOptionClick(item, label, weights = {}) {
+    previousTopics[item.name] = label;
+
+    if (label.includes('ミニゲーム') || label.includes('バイパス作業')) {
+      close();
+      window.dispatchEvent(new CustomEvent('start-minigame', {
+        detail: {
+          title: '高圧配線盤バイパス回路',
+          target: item.name,
+          onComplete: result => {
+            if (result.success) {
+              record('ミニゲーム達成', '配線バイパス成功（所要時間: ' + result.elapsed + '秒 / 試行ミス: ' + result.mistakes + '回）', {
+                D: result.elapsed < 8 ? 2 : 1,
+                C: result.mistakes === 0 ? 2 : 1,
+                S: result.elapsed >= 8 && result.mistakes === 0 ? 2 : 0
+              });
+              item.fixed = true;
+              item.name = '復旧済み配電盤（正常稼働中）';
+              item.type = '都市インフラ（正常）';
+              item.description = 'バイパス作業により正常化された配電盤。過熱も収まり、安定した青緑色の光を放っている。';
+              if (item.light) {
+                item.light.color.set(0x44ddaa);
+                item.light.intensity = 0.85;
+              }
+              anomaliesCleared++;
+              updateMemory('anomaliesFixed', 1);
+              toast('配電盤ガ正常復旧！電力システムガ安定シタ。');
+              checkMissionProgress();
+            } else {
+              record('ミニゲーム失敗', '配線バイパス失敗（過電流ショート発生 / 所要時間: ' + result.elapsed + '秒）', { D: 1, C: 1 });
+              toast('警告：過電流ショート発生！配電盤ノ復旧ニ失敗シタ。');
+            }
+          }
+        }
+      }));
+      return;
+    }
+
+    if (label.includes('カオスに突っ込む')) {
+      close();
+      record('カオス突入', '歪曲交差点の裂け目に直接突入（侵入継続）', { I: 3, D: 1 });
+      camera.position.x += (Math.random() - 0.5) * 6;
+      camera.position.z -= 6;
+      window.dispatchEvent(new CustomEvent('city-chaos'));
+      toast('LSI芋虫侵入群「境界線確保。侵入継続。感覚支配成功。🐛」');
+      return;
+    }
+
+    if (label.includes('近くのNPCを呼ぶ') || label.includes('最寄りの住人を呼び寄せる')) {
+      close();
+      record('NPC呼び出し', '交差点から最寄りの通行人に救援信号を発信', { I: 2, D: 1 });
+      window.dispatchEvent(new CustomEvent('npc-call-nearest', {
+        detail: { position: camera.position.clone() }
+      }));
+      toast('救援信号ヲ発信！最寄リノ住人ガ急行シテイマス……');
+      return;
+    }
+
     if (item.name === '忘失物ボックス') {
       cityMemory.natsueReceiptFound = true;
       if (!inventory.includes('古い学生証（名前：夏江）')) {
@@ -782,10 +858,11 @@ ${studentCardHtml}`;
       } else {
         const obsName = cityMemory.natsueNameRevealed ? '夏江' : '観測者';
         if (raw.includes('学生証')) {
-          cityMemory.natsueAffection += 3;
+          cityMemory.natsueAffection += 4;
           cityMemory.natsueReceiptFound = true;
           cityMemory.natsueNameRevealed = true;
-          line = `${obsName}「……！ その学生証、私の……？ ……うん、見覚えがある。私はずっと、自分が誰かを探してたんだ。『夏江』……それが私なのかな。見つけてくれて、本当にありがとう。」`;
+          const cardHtml = '<div class="student-id-display-card"><img src="./profile.png" alt="夏江の学生証" class="student-id-image" /><p class="student-id-caption">【手渡し返却完了】都立高校 学生証（氏名：夏江）</p></div>';
+          line = `${obsName}「……！ その学生証、私の……？ ……うん、見覚えがある。雨の中で失くしてしまって、ずっと探してたの……。『夏江』……それが私なんだね。私を見つけて、手渡してくれて、本当にありがとう……！」\n${cardHtml}`;
           completeMission('M_NATSUE', '【ミッション達成！】『失われた都民・夏江の捜索』が完了しました！');
         } else if (raw.includes('メモ') || raw.includes('レシート')) {
           cityMemory.natsueAffection += 2;
@@ -2117,15 +2194,30 @@ ${studentCardHtml}`;
     if (!tappedTarget) {
       for (const item of interactables) {
         if (item.kind === 'darling' || item.kind === 'caterpillar' || item.kind === 'observer') continue;
-        if (camera.position.distanceTo(item.position) > 8.0) continue;
+        const isBig = item.kind?.startsWith('building') || item.kind === 'chaos' || item.kind === 'vending' || item.name?.includes('アーカイブ') || item.kind === 'bench';
+        const maxDist = isBig ? 32.0 : 18.0;
+        if (camera.position.distanceTo(item.position) > maxDist) continue;
 
-        const vToItem = item.position.clone().add(new THREE.Vector3(0, 0.8, 0)).sub(camera.position);
-        const proj = vToItem.dot(tapRay.ray.direction);
-        if (proj <= 0) continue;
-        const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
-        const distToRay = closestPoint.distanceTo(item.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
+        const hitTolerance = isBig ? 3.8 : 2.2;
+        let isHit = false;
+        const offsets = isBig ? [-1.2, 0, 1.2] : [0];
+        for (const xo of offsets) {
+          for (const yo of [0.5, 1.2, 2.0]) {
+            const checkPos = item.position.clone().add(new THREE.Vector3(xo, yo, 0));
+            const vToItem = checkPos.sub(camera.position);
+            const proj = vToItem.dot(tapRay.ray.direction);
+            if (proj <= 0) continue;
+            const closestPoint = camera.position.clone().add(tapRay.ray.direction.clone().multiplyScalar(proj));
+            const distToRay = closestPoint.distanceTo(item.position.clone().add(new THREE.Vector3(xo, yo, 0)));
+            if (distToRay < hitTolerance) {
+              isHit = true;
+              break;
+            }
+          }
+          if (isHit) break;
+        }
 
-        if (distToRay < 1.55) {
+        if (isHit) {
           tappedTarget = item;
           break;
         }
@@ -2142,6 +2234,7 @@ ${studentCardHtml}`;
         }
         focusedTarget = null;
         clearTimeout(focusedTargetTimer);
+        interact.classList.add('hidden');
       } else {
         // 別の対象が注視されていた場合はまず歩行再開
         if (focusedTarget && focusedTarget.wait !== undefined) {

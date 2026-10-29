@@ -466,15 +466,19 @@ button:active {
 /* Dialog Box */
 .dialog {
   left: 50%;
-  bottom: 8%;
+  bottom: 6%;
   transform: translateX(-50%);
-  width: min(620px, calc(100vw - 32px));
-  padding: 22px 26px;
+  width: min(640px, calc(100vw - 28px));
+  max-height: 84vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.8), 0 0 30px rgba(114, 246, 255, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.85), 0 0 30px rgba(114, 246, 255, 0.2);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .dialog-head {
@@ -1398,7 +1402,59 @@ body.mobile #mobileControls {
   display: block;
 }
 
-/* Mobile Menu Toggle Button and Mobile Drawer */
+/* Mobile Header & Responsive Controls */
+body.mobile .topbar,
+@media (max-width: 768px) {
+  .topbar {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand-emblem-wrap {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand-title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .brand-sub {
+    font-size: 7.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .weather-badge {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
+  .hud-toggle-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+    margin-right: 4px;
+  }
+
+  #clock {
+    font-size: 9.5px;
+    padding: 2px 5px;
+  }
+}
+
+/* Mobile HUD Top Actions (Always-Visible Exit Button & Menu FAB) */
+.mobile-hud-top-actions {
+  display: none;
+}
+
+.mobile-always-exit-btn {
+  display: none;
+}
+
 .mobile-menu-fab {
   display: none;
 }
@@ -1407,99 +1463,159 @@ body.mobile #mobileControls {
   display: none;
 }
 
-body.mobile .mobile-menu-fab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  position: fixed;
-  top: 56px;
-  right: 14px;
-  z-index: 20;
-  background: rgba(9, 20, 36, 0.92);
-  border: 1px solid var(--cyan);
-  color: #fff;
-  padding: 7px 14px;
-  border-radius: 20px;
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 10px rgba(114, 246, 255, 0.35);
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
+body.mobile .mobile-hud-top-actions,
+@media (max-width: 768px) {
+  .mobile-hud-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    top: 48px;
+    right: 10px;
+    z-index: 20;
+  }
+
+  .mobile-always-exit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(255, 60, 110, 0.45) 0%, rgba(255, 117, 200, 0.3) 100%);
+    border: 1px solid rgba(255, 117, 200, 0.85);
+    color: #fff;
+    padding: 5px 11px;
+    border-radius: 18px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 117, 200, 0.45);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+  }
+
+  .mobile-always-exit-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 60, 110, 0.65);
+  }
+
+  .mobile-menu-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(9, 20, 36, 0.94);
+    border: 1px solid var(--cyan);
+    color: #fff;
+    padding: 5px 11px;
+    border-radius: 18px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 10px rgba(114, 246, 255, 0.35);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+  }
+
+  body.mobile-menu-open .mobile-menu-fab {
+    border-color: var(--pink);
+    color: #ff9ee2;
+    box-shadow: 0 0 14px rgba(255, 117, 200, 0.45);
+  }
+
+  .hud-mobile-close-btn {
+    display: block !important;
+    background: rgba(255, 60, 110, 0.22) !important;
+    border: 1px solid rgba(255, 117, 200, 0.7) !important;
+    color: #ffc2eb !important;
+    padding: 8px 12px !important;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 11px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .hud-right {
+    top: 86px;
+    bottom: auto;
+    right: 10px;
+    max-width: 210px;
+    width: 190px;
+    background: rgba(6, 14, 28, 0.96);
+    border: 1px solid rgba(114, 246, 255, 0.45);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(114, 246, 255, 0.2);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transform: translateX(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    z-index: 25;
+  }
+
+  body.mobile-menu-open .hud-right {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .hud-right button {
+    font-size: 10.5px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+
+  .hud-left {
+    display: none !important;
+  }
+
+  .mission {
+    left: 10px;
+    top: 48px;
+    max-width: calc(100vw - 220px);
+    padding: 4px 8px;
+  }
+
+  .mission .district-badge {
+    font-size: 7.5px;
+    padding: 1px 4px;
+    margin-bottom: 2px;
+  }
+
+  .mission strong {
+    font-size: 10.5px;
+  }
+
+  .mission span#objective {
+    display: none;
+  }
+
+  .dialog {
+    bottom: 10%;
+    left: 10px;
+    right: 10px;
+    max-width: calc(100vw - 20px);
+    padding: 14px;
+  }
 }
 
-body.mobile.mobile-menu-open .mobile-menu-fab {
-  border-color: var(--pink);
-  color: #ff9ee2;
-  box-shadow: 0 0 14px rgba(255, 117, 200, 0.45);
+.highlight-exit-help {
+  border-left: 3px solid var(--pink) !important;
+  background: rgba(255, 117, 200, 0.12) !important;
 }
 
-body.mobile .hud-mobile-close-btn {
-  display: block !important;
-  background: rgba(255, 60, 110, 0.22) !important;
-  border: 1px solid rgba(255, 117, 200, 0.7) !important;
-  color: #ffc2eb !important;
-  padding: 9px 12px !important;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-body.mobile .hud-right {
-  top: 96px;
-  bottom: auto;
-  right: 14px;
-  max-width: 220px;
-  width: 200px;
-  background: rgba(6, 14, 28, 0.96);
-  border: 1px solid rgba(114, 246, 255, 0.45);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(114, 246, 255, 0.2);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transform: translateX(140%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-  z-index: 25;
-}
-
-body.mobile.mobile-menu-open .hud-right {
-  transform: translateX(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-body.mobile .hud-right button {
-  font-size: 11px;
-  padding: 9px 12px;
-  width: 100%;
-}
-
-body.mobile .hud-left {
-  left: 14px;
-  bottom: 144px;
-  width: 160px;
-  padding: 10px;
-}
-
-body.mobile .mission {
-  left: 14px;
-  top: 66px;
-  max-width: calc(100vw - 28px);
-}
-
-body.mobile .dialog {
-  bottom: 12%;
+.highlight-exit-help h4 {
+  color: #ff9ee2 !important;
 }
 
 .hidden {
