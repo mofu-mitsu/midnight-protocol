@@ -1409,11 +1409,10 @@ body.mobile.modal-controls-suppressed #mobileControls {
   pointer-events: none;
 }
 
-/* Hide mobile controls when dialog/input modal is open or before game starts */
-body.in-dialog #mobileControls,
-body:has(#dialog:not(.hidden)) #mobileControls,
-body:has(#directInputModal:not(.hidden)) #mobileControls,
-body:has(#resultsModal:not(.hidden)) #mobileControls,
+/* Keep controls hidden before gameplay only.
+   During dialogs, controls.js toggles modal-controls-suppressed and restores
+   visibility when the dialog closes. Do not use display:none for dialogs:
+   it can leave mobile controls effectively missing if a dialog state gets stuck. */
 body:not(.game-started) #mobileControls,
 body:has(#startScreen:not(.hidden)) #mobileControls {
   display: none !important;
